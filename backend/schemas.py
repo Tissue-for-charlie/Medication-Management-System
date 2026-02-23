@@ -2,7 +2,7 @@ from datetime import date, datetime
 from decimal import Decimal
 from typing import Optional
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class ORMModel(BaseModel):
@@ -10,18 +10,18 @@ class ORMModel(BaseModel):
 
 
 class UserBase(BaseModel):
-    username: str
+    username: str = Field(min_length=3, max_length=50)
     role: str = "user"
     contact: Optional[str] = None
 
 
 class UserCreate(UserBase):
-    password: str
+    password: str = Field(min_length=6, max_length=255)
 
 
 class UserUpdate(BaseModel):
-    username: Optional[str] = None
-    password: Optional[str] = None
+    username: Optional[str] = Field(default=None, min_length=3, max_length=50)
+    password: Optional[str] = Field(default=None, min_length=6, max_length=255)
     role: Optional[str] = None
     contact: Optional[str] = None
 
@@ -33,8 +33,8 @@ class User(UserBase, ORMModel):
 
 
 class CategoryBase(BaseModel):
-    name: str
-    parent_id: Optional[int] = None
+    name: str = Field(min_length=1, max_length=100)
+    parent_id: Optional[int] = Field(default=None, ge=1)
     description: Optional[str] = None
 
 
@@ -43,8 +43,8 @@ class CategoryCreate(CategoryBase):
 
 
 class CategoryUpdate(BaseModel):
-    name: Optional[str] = None
-    parent_id: Optional[int] = None
+    name: Optional[str] = Field(default=None, min_length=1, max_length=100)
+    parent_id: Optional[int] = Field(default=None, ge=1)
     description: Optional[str] = None
 
 
@@ -55,12 +55,12 @@ class Category(CategoryBase, ORMModel):
 
 
 class MedicationBase(BaseModel):
-    name: str
-    category_id: Optional[int] = None
+    name: str = Field(min_length=1, max_length=100)
+    category_id: Optional[int] = Field(default=None, ge=1)
     specification: Optional[str] = None
-    unit_price: Decimal
-    stock_quantity: int = 0
-    min_stock_level: int = 10
+    unit_price: Decimal = Field(gt=0)
+    stock_quantity: int = Field(default=0, ge=0)
+    min_stock_level: int = Field(default=10, ge=0)
     description: Optional[str] = None
 
 
@@ -70,11 +70,11 @@ class MedicationCreate(MedicationBase):
 
 class MedicationUpdate(BaseModel):
     name: Optional[str] = None
-    category_id: Optional[int] = None
+    category_id: Optional[int] = Field(default=None, ge=1)
     specification: Optional[str] = None
-    unit_price: Optional[Decimal] = None
-    stock_quantity: Optional[int] = None
-    min_stock_level: Optional[int] = None
+    unit_price: Optional[Decimal] = Field(default=None, gt=0)
+    stock_quantity: Optional[int] = Field(default=None, ge=0)
+    min_stock_level: Optional[int] = Field(default=None, ge=0)
     description: Optional[str] = None
 
 
@@ -85,8 +85,8 @@ class Medication(MedicationBase, ORMModel):
 
 
 class SupplierBase(BaseModel):
-    name: str
-    contact_person: Optional[str] = None
+    name: str = Field(min_length=1, max_length=100)
+    contact_person: Optional[str] = Field(default=None, max_length=50)
     phone: Optional[str] = None
     email: Optional[str] = None
     address: Optional[str] = None
@@ -97,8 +97,8 @@ class SupplierCreate(SupplierBase):
 
 
 class SupplierUpdate(BaseModel):
-    name: Optional[str] = None
-    contact_person: Optional[str] = None
+    name: Optional[str] = Field(default=None, min_length=1, max_length=100)
+    contact_person: Optional[str] = Field(default=None, max_length=50)
     phone: Optional[str] = None
     email: Optional[str] = None
     address: Optional[str] = None
@@ -111,11 +111,11 @@ class Supplier(SupplierBase, ORMModel):
 
 
 class PurchaseBase(BaseModel):
-    medication_id: int
-    supplier_id: int
-    quantity: int
-    unit_price: Decimal
-    total_price: Decimal
+    medication_id: int = Field(ge=1)
+    supplier_id: int = Field(ge=1)
+    quantity: int = Field(gt=0)
+    unit_price: Decimal = Field(gt=0)
+    total_price: Decimal = Field(gt=0)
     purchase_date: date
     status: str = "pending"
     notes: Optional[str] = None
@@ -126,11 +126,11 @@ class PurchaseCreate(PurchaseBase):
 
 
 class PurchaseUpdate(BaseModel):
-    medication_id: Optional[int] = None
-    supplier_id: Optional[int] = None
-    quantity: Optional[int] = None
-    unit_price: Optional[Decimal] = None
-    total_price: Optional[Decimal] = None
+    medication_id: Optional[int] = Field(default=None, ge=1)
+    supplier_id: Optional[int] = Field(default=None, ge=1)
+    quantity: Optional[int] = Field(default=None, gt=0)
+    unit_price: Optional[Decimal] = Field(default=None, gt=0)
+    total_price: Optional[Decimal] = Field(default=None, gt=0)
     purchase_date: Optional[date] = None
     status: Optional[str] = None
     notes: Optional[str] = None
@@ -143,11 +143,11 @@ class Purchase(PurchaseBase, ORMModel):
 
 
 class SaleBase(BaseModel):
-    medication_id: int
-    customer_name: str
-    quantity: int
-    unit_price: Decimal
-    total_price: Decimal
+    medication_id: int = Field(ge=1)
+    customer_name: str = Field(min_length=1, max_length=100)
+    quantity: int = Field(gt=0)
+    unit_price: Decimal = Field(gt=0)
+    total_price: Decimal = Field(gt=0)
     sale_date: date
     payment_method: str = "cash"
     notes: Optional[str] = None
@@ -158,11 +158,11 @@ class SaleCreate(SaleBase):
 
 
 class SaleUpdate(BaseModel):
-    medication_id: Optional[int] = None
-    customer_name: Optional[str] = None
-    quantity: Optional[int] = None
-    unit_price: Optional[Decimal] = None
-    total_price: Optional[Decimal] = None
+    medication_id: Optional[int] = Field(default=None, ge=1)
+    customer_name: Optional[str] = Field(default=None, min_length=1, max_length=100)
+    quantity: Optional[int] = Field(default=None, gt=0)
+    unit_price: Optional[Decimal] = Field(default=None, gt=0)
+    total_price: Optional[Decimal] = Field(default=None, gt=0)
     sale_date: Optional[date] = None
     payment_method: Optional[str] = None
     notes: Optional[str] = None
@@ -175,9 +175,9 @@ class Sale(SaleBase, ORMModel):
 
 
 class ReturnBase(BaseModel):
-    sale_id: int
-    medication_id: int
-    quantity: int
+    sale_id: int = Field(ge=1)
+    medication_id: int = Field(ge=1)
+    quantity: int = Field(gt=0)
     reason: Optional[str] = None
     return_date: date
     status: str = "pending"
@@ -189,9 +189,9 @@ class ReturnCreate(ReturnBase):
 
 
 class ReturnUpdate(BaseModel):
-    sale_id: Optional[int] = None
-    medication_id: Optional[int] = None
-    quantity: Optional[int] = None
+    sale_id: Optional[int] = Field(default=None, ge=1)
+    medication_id: Optional[int] = Field(default=None, ge=1)
+    quantity: Optional[int] = Field(default=None, gt=0)
     reason: Optional[str] = None
     return_date: Optional[date] = None
     status: Optional[str] = None
@@ -205,10 +205,10 @@ class Return(ReturnBase, ORMModel):
 
 
 class PrescriptionBase(BaseModel):
-    patient_name: str
-    medication_id: int
-    dosage: str
-    quantity: int
+    patient_name: str = Field(min_length=1, max_length=100)
+    medication_id: int = Field(ge=1)
+    dosage: str = Field(min_length=1, max_length=100)
+    quantity: int = Field(gt=0)
     prescribed_date: date
     notes: Optional[str] = None
 
@@ -218,10 +218,10 @@ class PrescriptionCreate(PrescriptionBase):
 
 
 class PrescriptionUpdate(BaseModel):
-    patient_name: Optional[str] = None
-    medication_id: Optional[int] = None
-    dosage: Optional[str] = None
-    quantity: Optional[int] = None
+    patient_name: Optional[str] = Field(default=None, min_length=1, max_length=100)
+    medication_id: Optional[int] = Field(default=None, ge=1)
+    dosage: Optional[str] = Field(default=None, min_length=1, max_length=100)
+    quantity: Optional[int] = Field(default=None, gt=0)
     prescribed_date: Optional[date] = None
     notes: Optional[str] = None
 
