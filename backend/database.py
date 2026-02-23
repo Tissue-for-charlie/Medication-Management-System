@@ -4,7 +4,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    database_url: str = "sqlite:///./medication_management.db"
+    database_url: str = "mysql+mysqlconnector://root:@127.0.0.1:3306/medication_management"
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
