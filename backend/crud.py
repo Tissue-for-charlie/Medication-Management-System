@@ -1,8 +1,13 @@
 from typing import Type
 
+from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from . import models
+
+
+class CrudError(ValueError):
+    """业务可预期错误，转换为 4xx。"""
 
 
 def _get(db: Session, model: Type, item_id: int):
@@ -13,10 +18,34 @@ def _list(db: Session, model: Type, skip: int = 0, limit: int = 100):
     return db.query(model).offset(skip).limit(limit).all()
 
 
+def _validate_references(db: Session, payload_data: dict):
+    references = {
+        "category_id": models.Category,
+        "medication_id": models.Medication,
+        "supplier_id": models.Supplier,
+        "sale_id": models.Sale,
+    }
+    for field, ref_model in references.items():
+        ref_id = payload_data.get(field)
+        if ref_id is None:
+            continue
+        if _get(db, ref_model, ref_id) is None:
+            raise CrudError(f"关联数据不存在: {field}={ref_id}")
+
+
 def _create(db: Session, model: Type, payload):
-    item = model(**payload.model_dump())
+    payload_data = payload.model_dump()
+    _validate_references(db, payload_data)
+    item = model(**payload_data)
     db.add(item)
-    db.commit()
+    try:
+        db.commit()
+    except IntegrityError as exc:
+        db.rollback()
+        raise CrudError("数据约束冲突，请检查唯一键或外键") from exc
+    except SQLAlchemyError as exc:
+        db.rollback()
+        raise CrudError("数据库写入失败") from exc
     db.refresh(item)
     return item
 
@@ -25,9 +54,18 @@ def _update(db: Session, model: Type, item_id: int, payload):
     item = _get(db, model, item_id)
     if not item:
         return None
-    for key, value in payload.model_dump(exclude_unset=True).items():
+    payload_data = payload.model_dump(exclude_unset=True)
+    _validate_references(db, payload_data)
+    for key, value in payload_data.items():
         setattr(item, key, value)
-    db.commit()
+    try:
+        db.commit()
+    except IntegrityError as exc:
+        db.rollback()
+        raise CrudError("数据约束冲突，请检查唯一键或外键") from exc
+    except SQLAlchemyError as exc:
+        db.rollback()
+        raise CrudError("数据库更新失败") from exc
     db.refresh(item)
     return item
 
@@ -37,7 +75,14 @@ def _delete(db: Session, model: Type, item_id: int):
     if not item:
         return False
     db.delete(item)
-    db.commit()
+    try:
+        db.commit()
+    except IntegrityError as exc:
+        db.rollback()
+        raise CrudError("该记录被其他数据引用，无法删除") from exc
+    except SQLAlchemyError as exc:
+        db.rollback()
+        raise CrudError("数据库删除失败") from exc
     return True
 
 

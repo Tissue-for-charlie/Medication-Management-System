@@ -1,6 +1,7 @@
 <template>
   <div class="page">
     <h2>药品信息管理</h2>
+    <p v-if="errorMessage" class="error">{{ errorMessage }}</p>
     <form class="form" @submit.prevent="save">
       <input v-model="form.name" placeholder="药品名称" required />
       <input v-model="form.specification" placeholder="规格" />
@@ -48,21 +49,32 @@ interface Medication {
 }
 
 const list = ref<Medication[]>([])
+const errorMessage = ref('')
 const form = ref<Medication>({ name: '', specification: '', unit_price: 0, stock_quantity: 0, min_stock_level: 10 })
 
 const load = async () => {
-  const { data } = await api.get('/api/medications')
-  list.value = data
+  try {
+    errorMessage.value = ''
+    const { data } = await api.get('/api/medications')
+    list.value = data
+  } catch (error: any) {
+    errorMessage.value = error?.response?.data?.detail || '加载药品数据失败'
+  }
 }
 
 const save = async () => {
-  if (form.value.id) {
-    await api.put(`/api/medications/${form.value.id}`, form.value)
-  } else {
-    await api.post('/api/medications', form.value)
+  try {
+    errorMessage.value = ''
+    if (form.value.id) {
+      await api.put(`/api/medications/${form.value.id}`, form.value)
+    } else {
+      await api.post('/api/medications', form.value)
+    }
+    reset()
+    await load()
+  } catch (error: any) {
+    errorMessage.value = error?.response?.data?.detail || '保存药品信息失败'
   }
-  reset()
-  await load()
 }
 
 const edit = (item: Medication) => {
@@ -71,8 +83,13 @@ const edit = (item: Medication) => {
 
 const remove = async (id?: number) => {
   if (!id) return
-  await api.delete(`/api/medications/${id}`)
-  await load()
+  try {
+    errorMessage.value = ''
+    await api.delete(`/api/medications/${id}`)
+    await load()
+  } catch (error: any) {
+    errorMessage.value = error?.response?.data?.detail || '删除药品失败'
+  }
 }
 
 const reset = () => {
@@ -87,4 +104,5 @@ onMounted(load)
 .form { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; margin-bottom: 16px; }
 table { width: 100%; border-collapse: collapse; }
 th, td { border: 1px solid #ddd; padding: 8px; }
+.error { color: #d93025; margin-bottom: 12px; }
 </style>
