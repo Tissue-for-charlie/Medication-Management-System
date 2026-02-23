@@ -91,6 +91,7 @@
 ## 项目结构
 
 ```
+
 Medication-Management-System/
 ├── frontend/                 # 前端代码
 │   ├── public/               # 静态资源
@@ -112,6 +113,73 @@ Medication-Management-System/
 │   └── requirements.txt      # 依赖包
 └── README.md                 # 项目说明
 ```
+
+
+## 在 VS Code 中运行（前后端一起启动）
+
+> 下面步骤按「先后端、再前端」执行，适合本地开发调试。
+
+### 1) 打开项目
+
+1. 打开 VS Code。
+2. 选择 **File → Open Folder**，打开 `Medication-Management-System` 根目录。
+3. 打开 VS Code 终端（`Ctrl + ``）。
+
+### 2) 启动后端（FastAPI）
+
+在第一个终端中执行：
+
+```bash
+cd backend
+python -m venv .venv
+# Windows
+.venv\Scripts\activate
+# macOS / Linux
+source .venv/bin/activate
+
+pip install -r requirements.txt
+cd ..
+python -m backend.run_server --host 127.0.0.1 --port 8000 --reload
+```
+
+说明：
+- 默认数据库使用 SQLite：`sqlite:///./medication_management.db`。
+- 如果你需要连接 MySQL，可在项目根目录新建 `.env`，设置 `DATABASE_URL`。
+
+### 3) 启动前端（Vue + Vite）
+
+新开第二个终端执行：
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+默认会输出一个本地地址（通常是 `http://127.0.0.1:5173`）。在浏览器打开即可。
+
+### 4) 前后端联调检查
+
+1. 打开前端页面。
+2. 在首页/各管理页面进行增删改查。
+3. 后端接口默认地址为 `http://127.0.0.1:8000`，前端会通过 `VITE_API_BASE_URL`（未配置时使用该默认值）访问 API。
+
+如果你想改后端地址，可以在 `frontend` 目录创建 `.env`：
+
+```bash
+VITE_API_BASE_URL=http://127.0.0.1:8000
+```
+
+### 5) 常见问题
+
+- **`ModuleNotFoundError: No module named 'backend'`**
+  - 请在项目根目录执行 `python -m backend.run_server ...`，不要在 `backend` 目录内直接用模块路径启动。
+- **前端请求失败 / CORS 问题**
+  - 确认后端在 `127.0.0.1:8000` 启动成功。
+  - 确认前端 `.env` 中 `VITE_API_BASE_URL` 与后端端口一致。
+- **端口占用**
+  - 后端可改为 `--port 8001`，同时更新前端 `VITE_API_BASE_URL`。
+
 
 ## 数据库设计
 
