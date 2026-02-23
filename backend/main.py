@@ -44,6 +44,16 @@ def get_inventory(db: Session = Depends(get_db)):
     }
 
 
+def _handle_delete(delete_fn, db: Session, item_id: int, not_found_detail: str):
+    try:
+        deleted = delete_fn(db, item_id)
+    except crud.DeleteConflictError:
+        raise HTTPException(status_code=409, detail="删除失败：记录仍被其他数据引用")
+    if not deleted:
+        raise HTTPException(status_code=404, detail=not_found_detail)
+    return {"message": "删除成功"}
+
+
 # Users
 @app.post("/api/users", response_model=schemas.User)
 def create_user(payload: schemas.UserCreate, db: Session = Depends(get_db)):
@@ -73,9 +83,7 @@ def update_user(item_id: int, payload: schemas.UserUpdate, db: Session = Depends
 
 @app.delete("/api/users/{item_id}")
 def delete_user(item_id: int, db: Session = Depends(get_db)):
-    if not crud.delete_user(db, item_id):
-        raise HTTPException(status_code=404, detail="用户未找到")
-    return {"message": "删除成功"}
+    return _handle_delete(crud.delete_user, db, item_id, "用户未找到")
 
 
 # Categories
@@ -107,9 +115,7 @@ def update_category(item_id: int, payload: schemas.CategoryUpdate, db: Session =
 
 @app.delete("/api/categories/{item_id}")
 def delete_category(item_id: int, db: Session = Depends(get_db)):
-    if not crud.delete_category(db, item_id):
-        raise HTTPException(status_code=404, detail="分类未找到")
-    return {"message": "删除成功"}
+    return _handle_delete(crud.delete_category, db, item_id, "分类未找到")
 
 
 # Medications
@@ -141,9 +147,7 @@ def update_medication(item_id: int, payload: schemas.MedicationUpdate, db: Sessi
 
 @app.delete("/api/medications/{item_id}")
 def delete_medication(item_id: int, db: Session = Depends(get_db)):
-    if not crud.delete_medication(db, item_id):
-        raise HTTPException(status_code=404, detail="药品未找到")
-    return {"message": "删除成功"}
+    return _handle_delete(crud.delete_medication, db, item_id, "药品未找到")
 
 
 # Suppliers
@@ -175,9 +179,7 @@ def update_supplier(item_id: int, payload: schemas.SupplierUpdate, db: Session =
 
 @app.delete("/api/suppliers/{item_id}")
 def delete_supplier(item_id: int, db: Session = Depends(get_db)):
-    if not crud.delete_supplier(db, item_id):
-        raise HTTPException(status_code=404, detail="供应商未找到")
-    return {"message": "删除成功"}
+    return _handle_delete(crud.delete_supplier, db, item_id, "供应商未找到")
 
 
 # Purchases
@@ -209,9 +211,7 @@ def update_purchase(item_id: int, payload: schemas.PurchaseUpdate, db: Session =
 
 @app.delete("/api/purchases/{item_id}")
 def delete_purchase(item_id: int, db: Session = Depends(get_db)):
-    if not crud.delete_purchase(db, item_id):
-        raise HTTPException(status_code=404, detail="采购记录未找到")
-    return {"message": "删除成功"}
+    return _handle_delete(crud.delete_purchase, db, item_id, "采购记录未找到")
 
 
 # Sales
@@ -243,9 +243,7 @@ def update_sale(item_id: int, payload: schemas.SaleUpdate, db: Session = Depends
 
 @app.delete("/api/sales/{item_id}")
 def delete_sale(item_id: int, db: Session = Depends(get_db)):
-    if not crud.delete_sale(db, item_id):
-        raise HTTPException(status_code=404, detail="销售记录未找到")
-    return {"message": "删除成功"}
+    return _handle_delete(crud.delete_sale, db, item_id, "销售记录未找到")
 
 
 # Returns
@@ -277,9 +275,7 @@ def update_return(item_id: int, payload: schemas.ReturnUpdate, db: Session = Dep
 
 @app.delete("/api/returns/{item_id}")
 def delete_return(item_id: int, db: Session = Depends(get_db)):
-    if not crud.delete_return(db, item_id):
-        raise HTTPException(status_code=404, detail="退货记录未找到")
-    return {"message": "删除成功"}
+    return _handle_delete(crud.delete_return, db, item_id, "退货记录未找到")
 
 
 # Prescriptions
@@ -311,6 +307,4 @@ def update_prescription(item_id: int, payload: schemas.PrescriptionUpdate, db: S
 
 @app.delete("/api/prescriptions/{item_id}")
 def delete_prescription(item_id: int, db: Session = Depends(get_db)):
-    if not crud.delete_prescription(db, item_id):
-        raise HTTPException(status_code=404, detail="处方未找到")
-    return {"message": "删除成功"}
+    return _handle_delete(crud.delete_prescription, db, item_id, "处方未找到")

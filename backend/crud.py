@@ -1,8 +1,13 @@
 from typing import Type
 
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from . import models
+
+
+class DeleteConflictError(Exception):
+    """Raised when delete violates relational integrity constraints."""
 
 
 def _get(db: Session, model: Type, item_id: int):
@@ -37,7 +42,11 @@ def _delete(db: Session, model: Type, item_id: int):
     if not item:
         return False
     db.delete(item)
-    db.commit()
+    try:
+        db.commit()
+    except IntegrityError as exc:
+        db.rollback()
+        raise DeleteConflictError from exc
     return True
 
 
