@@ -1,9 +1,11 @@
-from fastapi import Depends, FastAPI, HTTPException
+from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from . import crud, models, schemas
+from .crud import CrudError
 from .database import Base, engine, get_db
 
 Base.metadata.create_all(bind=engine)
@@ -13,10 +15,15 @@ app = FastAPI(title="药物管理系统 API", version="2.0.0")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
-    allow_credentials=True,
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.exception_handler(CrudError)
+async def handle_crud_error(_: Request, exc: CrudError):
+    return JSONResponse(status_code=400, content={"detail": str(exc)})
 
 
 @app.get("/")

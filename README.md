@@ -143,8 +143,9 @@ python -m backend.run_server --host 127.0.0.1 --port 8000 --reload
 ```
 
 说明：
-- 默认数据库使用 SQLite：`sqlite:///./medication_management.db`。
-- 如果你需要连接 MySQL，可在项目根目录新建 `.env`，设置 `DATABASE_URL`。
+- 默认数据库使用 MySQL（SQLAlchemy URL）：`mysql+mysqlconnector://root:@127.0.0.1:3306/medication_management`。
+- 首次使用前，请先在 MySQL 中创建数据库：`CREATE DATABASE medication_management CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;`。
+- 建议在项目根目录新建 `.env` 并设置 `DATABASE_URL`（例如你的账号密码不同时）。
 
 ### 3) 启动前端（Vue + Vite）
 
@@ -170,7 +171,15 @@ npm run dev
 VITE_API_BASE_URL=http://127.0.0.1:8000
 ```
 
-### 5) 常见问题
+### 5) MySQL 环境变量示例
+
+在项目根目录创建 `.env`：
+
+```bash
+DATABASE_URL=mysql+mysqlconnector://root:你的密码@127.0.0.1:3306/medication_management
+```
+
+### 6) 常见问题
 
 - **`ModuleNotFoundError: No module named 'backend'`**
   - 请在项目根目录执行 `python -m backend.run_server ...`，不要在 `backend` 目录内直接用模块路径启动。
@@ -179,6 +188,9 @@ VITE_API_BASE_URL=http://127.0.0.1:8000
   - 确认前端 `.env` 中 `VITE_API_BASE_URL` 与后端端口一致。
 - **端口占用**
   - 后端可改为 `--port 8001`，同时更新前端 `VITE_API_BASE_URL`。
+- **MySQL 连接失败**
+  - 检查 MySQL 服务是否启动、账号密码是否正确、数据库 `medication_management` 是否已创建。
+  - 确认已安装依赖并包含 `mysql-connector-python`（项目 `requirements.txt` 已包含）。
 
 
 ## 数据库设计
