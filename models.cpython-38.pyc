@@ -1,0 +1,26 @@
+// 供应商数据类型
+export interface Supplier {
+  id: number
+  supplier_name: string
+  contact: string
+  address: string
+  notes: string
+  created_at: string
+  updated_at: string
+}
+
+// 分页响应类型
+export interface PaginatedResponse<T> {
+  total: number
+  page: number
+  page_size: number
+  data: T[]
+}
+
+// 新增/编辑供应商参数
+export interface SupplierFormData {
+  supplier_name: string
+  contact: string
+  address: string
+  notes: string
+}
