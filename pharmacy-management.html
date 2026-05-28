@@ -1,0 +1,2529 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>医药管理系统</title>
+  <!-- 使用系统字体替代 Google Fonts，避免网络访问问题 -->
+  <style>
+    /* 定义字体回退方案 */
+    @font-face {
+      font-family: 'Noto Sans SC';
+      src: local('Microsoft YaHei'), local('PingFang SC'), local('Hiragino Sans GB'), local('sans-serif');
+    }
+    @font-face {
+      font-family: 'Rajdhani';
+      src: local('Arial'), local('Helvetica'), local('sans-serif');
+    }
+  </style>
+  <style>
+    :root {
+      --bg-primary: #0a0f1e;
+      --bg-secondary: #0d1529;
+      --bg-card: #111827;
+      --bg-card-hover: #162035;
+      --accent-primary: #00d4aa;
+      --accent-secondary: #0091ff;
+      --accent-warning: #f59e0b;
+      --accent-danger: #ef4444;
+      --accent-success: #10b981;
+      --text-primary: #e2e8f0;
+      --text-secondary: #94a3b8;
+      --text-muted: #4b5563;
+      --border: #1e2d45;
+      --border-light: #243349;
+      --sidebar-w: 240px;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Noto Sans SC', sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ===== LOGIN ===== */
+    #login-screen {
+      position: fixed;
+      inset: 0;
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--bg-primary);
+      background-image:
+        radial-gradient(ellipse at 20% 50%, rgba(0, 212, 170, 0.07) 0%, transparent 60%),
+        radial-gradient(ellipse at 80% 20%, rgba(0, 145, 255, 0.07) 0%, transparent 60%);
+    }
+
+    .login-grid {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      pointer-events: none;
+      background-image:
+        linear-gradient(rgba(0, 212, 170, 0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 212, 170, 0.04) 1px, transparent 1px);
+      background-size: 40px 40px;
+    }
+
+    .login-box {
+      background: var(--bg-card);
+      border: 1px solid var(--border-light);
+      border-radius: 16px;
+      padding: 48px;
+      width: 420px;
+      position: relative;
+      box-shadow: 0 25px 80px rgba(0, 0, 0, 0.6), 0 0 60px rgba(0, 212, 170, 0.05);
+    }
+
+    .login-box::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 120px;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--accent-primary), transparent);
+      border-radius: 2px;
+    }
+
+    .login-logo {
+      text-align: center;
+      margin-bottom: 36px;
+    }
+
+    .login-logo .icon {
+      width: 60px;
+      height: 60px;
+      margin: 0 auto 16px;
+      background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      box-shadow: 0 8px 24px rgba(0, 212, 170, 0.3);
+    }
+
+    .login-logo h1 {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 26px;
+      font-weight: 700;
+      color: var(--text-primary);
+      letter-spacing: 2px;
+    }
+
+    .login-logo p {
+      font-size: 13px;
+      color: var(--text-secondary);
+      margin-top: 4px;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 12px;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 8px;
+    }
+
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      width: 100%;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-light);
+      border-radius: 8px;
+      padding: 12px 16px;
+      color: var(--text-primary);
+      font-family: 'Noto Sans SC', sans-serif;
+      font-size: 14px;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      outline: none;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+      border-color: var(--accent-primary);
+      box-shadow: 0 0 0 3px rgba(0, 212, 170, 0.1);
+    }
+
+    .form-group select {
+      cursor: pointer;
+    }
+
+    .form-group textarea {
+      resize: vertical;
+      min-height: 80px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 11px 22px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      font-family: 'Noto Sans SC', sans-serif;
+      font-size: 14px;
+      font-weight: 500;
+      transition: all 0.2s;
+      text-decoration: none;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent-primary), #00b38a);
+      color: #0a0f1e;
+      box-shadow: 0 4px 16px rgba(0, 212, 170, 0.3);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 8px 24px rgba(0, 212, 170, 0.4);
+    }
+
+    .btn-secondary {
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+      border: 1px solid var(--border-light);
+    }
+
+    .btn-secondary:hover {
+      background: var(--border-light);
+    }
+
+    .btn-danger {
+      background: rgba(239, 68, 68, 0.15);
+      color: var(--accent-danger);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+
+    .btn-danger:hover {
+      background: rgba(239, 68, 68, 0.25);
+    }
+
+    .btn-warning {
+      background: rgba(245, 158, 11, 0.15);
+      color: var(--accent-warning);
+      border: 1px solid rgba(245, 158, 11, 0.3);
+    }
+
+    .btn-warning:hover {
+      background: rgba(245, 158, 11, 0.25);
+    }
+
+    .btn-sm {
+      padding: 7px 14px;
+      font-size: 13px;
+    }
+
+    .btn-full {
+      width: 100%;
+      justify-content: center;
+      padding: 14px;
+      font-size: 15px;
+    }
+
+    .login-error {
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: 13px;
+      color: var(--accent-danger);
+      margin-bottom: 16px;
+      display: none;
+    }
+
+    /* ===== MAIN LAYOUT ===== */
+    #app {
+      display: none;
+      height: 100vh;
+    }
+
+    .sidebar {
+      position: fixed;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: var(--sidebar-w);
+      background: var(--bg-secondary);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      z-index: 100;
+    }
+
+    .sidebar-brand {
+      padding: 24px 20px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .sidebar-brand .brand-icon {
+      width: 36px;
+      height: 36px;
+      background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+      border-radius: 10px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      margin-right: 10px;
+      vertical-align: middle;
+    }
+
+    .sidebar-brand span {
+      font-family: 'Rajdhani', sans-serif;
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      vertical-align: middle;
+    }
+
+    .sidebar-nav {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px 0;
+    }
+
+    .nav-section {
+      padding: 8px 20px 4px;
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 11px 20px;
+      cursor: pointer;
+      color: var(--text-secondary);
+      font-size: 14px;
+      transition: all 0.15s;
+      border-left: 3px solid transparent;
+      user-select: none;
+    }
+
+    .nav-item:hover {
+      color: var(--text-primary);
+      background: rgba(255, 255, 255, 0.04);
+    }
+
+    .nav-item.active {
+      color: var(--accent-primary);
+      background: rgba(0, 212, 170, 0.08);
+      border-left-color: var(--accent-primary);
+    }
+
+    .nav-item .icon {
+      font-size: 17px;
+      width: 20px;
+      text-align: center;
+      flex-shrink: 0;
+    }
+
+    .nav-badge {
+      margin-left: auto;
+      background: var(--accent-danger);
+      color: white;
+      font-size: 10px;
+      padding: 2px 6px;
+      border-radius: 10px;
+      font-weight: 700;
+    }
+
+    .sidebar-footer {
+      padding: 16px 20px;
+      border-top: 1px solid var(--border);
+    }
+
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 15px;
+      font-weight: 700;
+      color: #0a0f1e;
+      flex-shrink: 0;
+    }
+
+    .user-name {
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    .user-role {
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+
+    /* ===== MAIN CONTENT ===== */
+    .main {
+      margin-left: var(--sidebar-w);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .topbar {
+      background: var(--bg-secondary);
+      border-bottom: 1px solid var(--border);
+      padding: 0 32px;
+      height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+
+    .topbar-left h2 {
+      font-size: 20px;
+      font-weight: 600;
+    }
+
+    .topbar-left p {
+      font-size: 13px;
+      color: var(--text-secondary);
+      margin-top: 1px;
+    }
+
+    .topbar-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .topbar-search {
+      display: flex;
+      align-items: center;
+      background: var(--bg-card);
+      border: 1px solid var(--border-light);
+      border-radius: 8px;
+      padding: 8px 14px;
+      gap: 8px;
+      min-width: 240px;
+    }
+
+    .topbar-search input {
+      background: none;
+      border: none;
+      outline: none;
+      color: var(--text-primary);
+      font-size: 14px;
+      width: 100%;
+      font-family: 'Noto Sans SC', sans-serif;
+    }
+
+    .topbar-search input::placeholder {
+      color: var(--text-muted);
+    }
+
+    .content {
+      flex: 1;
+      padding: 32px;
+    }
+
+    /* ===== DASHBOARD ===== */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 20px;
+      margin-bottom: 28px;
+    }
+
+    .stat-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 24px;
+      position: relative;
+      overflow: hidden;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .stat-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    }
+
+    .stat-card::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+    }
+
+    .stat-card.green::after {
+      background: linear-gradient(90deg, var(--accent-primary), transparent);
+    }
+
+    .stat-card.blue::after {
+      background: linear-gradient(90deg, var(--accent-secondary), transparent);
+    }
+
+    .stat-card.yellow::after {
+      background: linear-gradient(90deg, var(--accent-warning), transparent);
+    }
+
+    .stat-card.red::after {
+      background: linear-gradient(90deg, var(--accent-danger), transparent);
+    }
+
+    .stat-icon {
+      font-size: 28px;
+      margin-bottom: 16px;
+      width: 52px;
+      height: 52px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .stat-card.green .stat-icon {
+      background: rgba(0, 212, 170, 0.12);
+    }
+
+    .stat-card.blue .stat-icon {
+      background: rgba(0, 145, 255, 0.12);
+    }
+
+    .stat-card.yellow .stat-icon {
+      background: rgba(245, 158, 11, 0.12);
+    }
+
+    .stat-card.red .stat-icon {
+      background: rgba(239, 68, 68, 0.12);
+    }
+
+    .stat-value {
+      font-size: 32px;
+      font-weight: 700;
+      font-family: 'Rajdhani', sans-serif;
+    }
+
+    .stat-card.green .stat-value {
+      color: var(--accent-primary);
+    }
+
+    .stat-card.blue .stat-value {
+      color: var(--accent-secondary);
+    }
+
+    .stat-card.yellow .stat-value {
+      color: var(--accent-warning);
+    }
+
+    .stat-card.red .stat-value {
+      color: var(--accent-danger);
+    }
+
+    .stat-label {
+      font-size: 13px;
+      color: var(--text-secondary);
+      margin-top: 4px;
+    }
+
+    .stat-change {
+      font-size: 12px;
+      margin-top: 8px;
+      color: var(--accent-success);
+    }
+
+    .dashboard-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    .card-header {
+      padding: 20px 24px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .card-title {
+      font-size: 15px;
+      font-weight: 600;
+    }
+
+    .card-body {
+      padding: 24px;
+    }
+
+    /* ===== TABLES ===== */
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 24px;
+      flex-wrap: gap;
+    }
+
+    .section-title {
+      font-size: 18px;
+      font-weight: 600;
+    }
+
+    .section-actions {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .table-container {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    thead th {
+      padding: 14px 18px;
+      background: var(--bg-secondary);
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--text-secondary);
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+
+    tbody tr {
+      border-bottom: 1px solid var(--border);
+      transition: background 0.15s;
+    }
+
+    tbody tr:last-child {
+      border-bottom: none;
+    }
+
+    tbody tr:hover {
+      background: var(--bg-card-hover);
+    }
+
+    tbody td {
+      padding: 14px 18px;
+      font-size: 14px;
+      color: var(--text-primary);
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+
+    .badge-success {
+      background: rgba(16, 185, 129, 0.15);
+      color: var(--accent-success);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+
+    .badge-warning {
+      background: rgba(245, 158, 11, 0.15);
+      color: var(--accent-warning);
+      border: 1px solid rgba(245, 158, 11, 0.3);
+    }
+
+    .badge-danger {
+      background: rgba(239, 68, 68, 0.15);
+      color: var(--accent-danger);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+
+    .badge-info {
+      background: rgba(0, 145, 255, 0.15);
+      color: var(--accent-secondary);
+      border: 1px solid rgba(0, 145, 255, 0.3);
+    }
+
+    .badge-neutral {
+      background: rgba(148, 163, 184, 0.12);
+      color: var(--text-secondary);
+      border: 1px solid var(--border-light);
+    }
+
+    .table-actions {
+      display: flex;
+      gap: 6px;
+    }
+
+    /* ===== PAGINATION ===== */
+    .pagination {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 18px;
+      border-top: 1px solid var(--border);
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+
+    .page-btns {
+      display: flex;
+      gap: 4px;
+    }
+
+    .page-btn {
+      width: 32px;
+      height: 32px;
+      border-radius: 6px;
+      border: 1px solid var(--border-light);
+      background: var(--bg-secondary);
+      color: var(--text-secondary);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      transition: all 0.15s;
+    }
+
+    .page-btn:hover {
+      border-color: var(--accent-primary);
+      color: var(--accent-primary);
+    }
+
+    .page-btn.active {
+      background: var(--accent-primary);
+      border-color: var(--accent-primary);
+      color: #0a0f1e;
+      font-weight: 700;
+    }
+
+    /* ===== MODAL ===== */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 500;
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(4px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-overlay.active {
+      display: flex;
+    }
+
+    .modal {
+      background: var(--bg-card);
+      border: 1px solid var(--border-light);
+      border-radius: 16px;
+      width: 560px;
+      max-width: 95vw;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: 0 25px 80px rgba(0, 0, 0, 0.6);
+      animation: modalIn 0.2s ease;
+    }
+
+    @keyframes modalIn {
+      from {
+        opacity: 0;
+        transform: translateY(-16px) scale(0.98);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    .modal-header {
+      padding: 24px 28px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .modal-title {
+      font-size: 17px;
+      font-weight: 600;
+    }
+
+    .modal-close {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      border: none;
+      background: var(--bg-secondary);
+      color: var(--text-secondary);
+      cursor: pointer;
+      font-size: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.15s;
+    }
+
+    .modal-close:hover {
+      background: var(--border-light);
+      color: var(--text-primary);
+    }
+
+    .modal-body {
+      padding: 28px;
+    }
+
+    .modal-footer {
+      padding: 20px 28px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    /* ===== ALERT ===== */
+    .alert {
+      position: fixed;
+      top: 80px;
+      right: 24px;
+      z-index: 999;
+      padding: 14px 20px;
+      border-radius: 10px;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 260px;
+      max-width: 380px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+      animation: slideIn 0.3s ease;
+      border-left: 4px solid;
+    }
+
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateX(20px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+
+    .alert-success {
+      background: rgba(16, 185, 129, 0.15);
+      border-color: var(--accent-success);
+      color: var(--accent-success);
+    }
+
+    .alert-error {
+      background: rgba(239, 68, 68, 0.15);
+      border-color: var(--accent-danger);
+      color: var(--accent-danger);
+    }
+
+    /* ===== FILTER BAR ===== */
+    .filter-bar {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px 18px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+
+    .filter-bar label {
+      font-size: 12px;
+      color: var(--text-secondary);
+      white-space: nowrap;
+    }
+
+    .filter-bar select,
+    .filter-bar input {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-light);
+      border-radius: 6px;
+      padding: 7px 12px;
+      color: var(--text-primary);
+      font-family: 'Noto Sans SC', sans-serif;
+      font-size: 13px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .filter-bar select:focus,
+    .filter-bar input:focus {
+      border-color: var(--accent-primary);
+    }
+
+    /* ===== CHART BARS ===== */
+    .mini-chart {
+      display: flex;
+      align-items: flex-end;
+      gap: 6px;
+      height: 80px;
+    }
+
+    .bar {
+      flex: 1;
+      border-radius: 4px 4px 0 0;
+      background: linear-gradient(180deg, var(--accent-primary), rgba(0, 212, 170, 0.3));
+      position: relative;
+      transition: opacity 0.2s;
+      min-width: 8px;
+    }
+
+    .bar:hover {
+      opacity: 0.8;
+    }
+
+    /* ===== ALERT LIST ===== */
+    .alert-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 14px 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .alert-item:last-child {
+      border-bottom: none;
+    }
+
+    .alert-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      margin-top: 4px;
+      flex-shrink: 0;
+    }
+
+    .alert-dot.red {
+      background: var(--accent-danger);
+      box-shadow: 0 0 6px var(--accent-danger);
+    }
+
+    .alert-dot.yellow {
+      background: var(--accent-warning);
+      box-shadow: 0 0 6px var(--accent-warning);
+    }
+
+    /* ===== EMPTY STATE ===== */
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--text-muted);
+    }
+
+    .empty-state .icon {
+      font-size: 48px;
+      margin-bottom: 16px;
+      opacity: 0.5;
+    }
+
+    .empty-state p {
+      font-size: 14px;
+    }
+
+    /* ===== SCROLLBAR ===== */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: var(--bg-primary);
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: var(--border-light);
+      border-radius: 3px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--text-muted);
+    }
+
+    /* ===== PROGRESS ===== */
+    .progress {
+      height: 6px;
+      background: var(--border);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+
+    .progress-bar {
+      height: 100%;
+      border-radius: 3px;
+      background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
+    }
+
+    /* ===== TAB-LIKE PAGE SWITCHING ===== */
+    .page {
+      display: none;
+    }
+
+    .page.active {
+      display: block;
+    }
+
+    /* Notification dot */
+    .notif {
+      position: relative;
+    }
+
+    .notif-dot {
+      position: absolute;
+      top: -2px;
+      right: -2px;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--accent-danger);
+      border: 2px solid var(--bg-secondary);
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- ============ LOGIN ============ -->
+  <div id="login-screen">
+    <div class="login-grid"></div>
+    <div class="login-box">
+      <div class="login-logo">
+        <div class="icon">💊</div>
+        <h1>PHARMA SYS</h1>
+        <p>医药综合管理平台 v1.0</p>
+      </div>
+      <div class="login-error" id="login-error">账号或密码错误，请重试</div>
+      <div class="form-group">
+        <label>账号</label>
+        <input type="text" id="login-user" placeholder="请输入登录账号" value="admin">
+      </div>
+      <div class="form-group">
+        <label>密码</label>
+        <input type="password" id="login-pass" placeholder="请输入密码" value="">
+      </div>
+      <div class="form-group" style="display:flex;align-items:center;gap:8px;">
+        <input type="checkbox" id="remember" style="width:auto;accent-color:var(--accent-primary)">
+        <label for="remember"
+          style="text-transform:none;letter-spacing:0;font-size:13px;color:var(--text-secondary);cursor:pointer;">记住我</label>
+        <span style="margin-left:auto;font-size:13px;color:var(--text-muted);cursor:not-allowed;">忘记密码？</span>
+      </div>
+      <button class="btn btn-primary btn-full" onclick="doLogin()">登 录</button>
+      <p style="text-align:center;font-size:12px;color:var(--text-muted);margin-top:20px;">
+        超级管理员：admin / 123456
+      </p>
+    </div>
+  </div>
+
+  <!-- ============ APP ============ -->
+  <div id="app">
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+      <div class="sidebar-brand">
+        <span class="brand-icon">💊</span>
+        <span>PHARMA SYS</span>
+      </div>
+      <nav class="sidebar-nav">
+        <div class="nav-section">主要功能</div>
+        <div class="nav-item active" onclick="goto('dashboard')">
+          <span class="icon">📊</span> 数据总览
+        </div>
+
+        <div class="nav-section">系统管理</div>
+        <div class="nav-item" onclick="goto('users')">
+          <span class="icon">👥</span> 用户管理
+        </div>
+        <div class="nav-item" onclick="goto('categories')">
+          <span class="icon">🗂️</span> 分类管理
+        </div>
+
+        <div class="nav-section">药品业务</div>
+        <div class="nav-item" onclick="goto('medicines')">
+          <span class="icon">💉</span> 药品管理
+          <span class="nav-badge" id="badge-medicines" style="display:none;">0</span>
+        </div>
+        <div class="nav-item" onclick="goto('procurement')">
+          <span class="icon">📦</span> 采购管理
+        </div>
+        <div class="nav-item" onclick="goto('suppliers')">
+          <span class="icon">🏭</span> 供应商管理
+        </div>
+        <div class="nav-item" onclick="goto('sales')">
+          <span class="icon">🛒</span> 销售管理
+        </div>
+      </nav>
+      <div class="sidebar-footer">
+        <div class="user-info">
+          <div class="avatar" id="user-avatar">A</div>
+          <div>
+            <div class="user-name" id="user-name-disp">管理员</div>
+            <div class="user-role" id="user-role-disp">超级管理员</div>
+          </div>
+        </div>
+        <button class="btn btn-secondary btn-sm" style="width:100%;justify-content:center;"
+          onclick="logout()">退出登录</button>
+      </div>
+    </div>
+
+    <!-- MAIN -->
+    <div class="main">
+      <div class="topbar">
+        <div class="topbar-left">
+          <h2 id="page-title">数据总览</h2>
+          <p id="page-desc">欢迎使用医药管理系统</p>
+        </div>
+        <div class="topbar-actions">
+          <div class="topbar-search" style="padding:0 14px;height:36px;gap:10px;">
+            <span>🔍</span>
+            <input type="text" placeholder="搜索药品、订单..." id="global-search" oninput="globalSearch(this.value)" style="height:100%;padding:0;">
+            <button class="btn btn-secondary btn-sm" style="white-space:nowrap;height:30px;line-height:28px;padding:0 12px;" onclick="clearGlobalSearch()">返回</button>
+          </div>
+          <div class="notif">
+            <button class="btn btn-secondary btn-sm" style="height:36px;line-height:34px;" onclick="goto('medicines')">🔔</button>
+            <div class="notif-dot"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="content">
+        <!-- DASHBOARD -->
+        <div class="page active" id="page-dashboard">
+          <div class="stats-grid">
+            <div class="stat-card green">
+              <div class="stat-icon">💊</div>
+              <div class="stat-value" id="stat-medicines-total">-</div>
+              <div class="stat-label">药品总数</div>
+              <div class="stat-change" id="stat-change-medicines">暂无数据</div>
+            </div>
+            <div class="stat-card blue">
+              <div class="stat-icon">📦</div>
+              <div class="stat-value" id="stat-procurement-month">-</div>
+              <div class="stat-label">本月采购额</div>
+              <div class="stat-change" id="stat-change-procurement">暂无数据</div>
+            </div>
+            <div class="stat-card yellow">
+              <div class="stat-icon">🛒</div>
+              <div class="stat-value" id="stat-sales-month">-</div>
+              <div class="stat-label">本月销售额</div>
+              <div class="stat-change" id="stat-change-sales">暂无数据</div>
+            </div>
+            <div class="stat-card red">
+              <div class="stat-icon">⚠️</div>
+              <div class="stat-value" id="stat-stock-warning">-</div>
+              <div class="stat-label">库存预警</div>
+              <div class="stat-change" id="stat-change-stock">暂无数据</div>
+            </div>
+          </div>
+
+          <div class="dashboard-row">
+            <div class="card">
+              <div class="card-header">
+                <span class="card-title">近7天销售趋势</span>
+                <span style="font-size:12px;color:var(--text-secondary);">单位：万元</span>
+              </div>
+              <div class="card-body">
+                <div class="mini-chart" id="sales-chart"></div>
+                <div
+                  style="display:flex;justify-content:space-between;margin-top:10px;font-size:11px;color:var(--text-muted);">
+                  <span>周一</span><span>周二</span><span>周三</span><span>周四</span><span>周五</span><span>周六</span><span>周日</span>
+                </div>
+              </div>
+            </div>
+            <div class="card">
+              <div class="card-header">
+                <span class="card-title">库存预警</span>
+                <span class="badge badge-danger" id="warn-count-badge">0 项</span>
+              </div>
+              <div class="card-body" id="alert-list" style="max-height:220px;overflow-y:auto;"></div>
+            </div>
+          </div>
+
+          <div style="margin-top:20px;">
+            <div class="card">
+              <div class="card-header">
+                <span class="card-title">最近销售记录</span>
+                <button class="btn btn-secondary btn-sm" onclick="goto('sales')">查看全部</button>
+              </div>
+              <table>
+                <thead>
+                  <tr>
+                    <th>单号</th>
+                    <th>药品名称</th>
+                    <th>数量</th>
+                    <th>金额</th>
+                    <th>客户</th>
+                    <th>时间</th>
+                    <th>状态</th>
+                  </tr>
+                </thead>
+                <tbody id="recent-sales"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- USERS -->
+        <div class="page" id="page-users">
+          <div class="section-header">
+            <div class="section-title">用户管理</div>
+            <div class="section-actions">
+              <button class="btn btn-primary" onclick="openModal('user')">+ 新增用户</button>
+            </div>
+          </div>
+          <div class="filter-bar">
+            <label>角色筛选</label>
+            <select onchange="filterTable('users',this.value,'role')">
+              <option value="">全部角色</option>
+              <option>超级管理员</option>
+              <option>管理员</option>
+              <option>普通用户</option>
+            </select>
+            <label>状态</label>
+            <select onchange="filterTable('users',this.value,'status')">
+              <option value="">全部</option>
+              <option>启用</option>
+              <option>禁用</option>
+            </select>
+            <input type="text" placeholder="搜索用户名/手机号..." oninput="filterTable('users',this.value,'search')"
+              style="margin-left:auto;">
+          </div>
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>用户名</th>
+                  <th>姓名</th>
+                  <th>手机号</th>
+                  <th>角色</th>
+                  <th>状态</th>
+                  <th>创建时间</th>
+                  <th>操作</th>
+                </tr>
+              </thead>
+              <tbody id="users-tbody"></tbody>
+            </table>
+            <div class="pagination">
+              <span id="users-info"></span>
+              <div class="page-btns" id="users-pages"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- CATEGORIES -->
+        <div class="page" id="page-categories">
+          <div class="section-header">
+            <div class="section-title">分类管理</div>
+            <div class="section-actions">
+              <button class="btn btn-primary" onclick="openModal('category')">+ 新增分类</button>
+            </div>
+          </div>
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>分类名称</th>
+                  <th>分类编码</th>
+                  <th>描述</th>
+                  <th>药品数量</th>
+                  <th>排序</th>
+                  <th>状态</th>
+                  <th>操作</th>
+                </tr>
+              </thead>
+              <tbody id="categories-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- MEDICINES -->
+        <div class="page" id="page-medicines">
+          <div class="section-header">
+            <div class="section-title">药品管理</div>
+            <div class="section-actions">
+              <button class="btn btn-primary" onclick="openModal('medicine')">+ 新增药品</button>
+            </div>
+          </div>
+          <div class="filter-bar">
+            <label>分类</label>
+            <select id="med-cat-filter" onchange="document.getElementById('med-search-input').value='';pages.medicines=1;renderMedicines()">
+              <option value="">全部</option>
+            </select>
+            <label>库存状态</label>
+            <select onchange="filterTable('medicines',this.value,'stock')">
+              <option value="">全部</option>
+              <option>充足</option>
+              <option>不足</option>
+              <option>预警</option>
+            </select>
+            <input type="text" id="med-search-input" placeholder="搜索药品名称/编码..." oninput="filterTable('medicines',this.value,'search')"
+              style="margin-left:auto;">
+            <button class="btn btn-secondary btn-sm" style="margin-left:8px;" onclick="clearMedSearch()">返回</button>
+          </div>
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>药品编码</th>
+                  <th>药品名称</th>
+                  <th>分类</th>
+                  <th>规格</th>
+                  <th>单价</th>
+                  <th>库存</th>
+                  <th>有效期</th>
+                  <th>生产厂家</th>
+                  <th>状态</th>
+                  <th>操作</th>
+                </tr>
+              </thead>
+              <tbody id="medicines-tbody"></tbody>
+            </table>
+            <div class="pagination">
+              <span id="medicines-info"></span>
+              <div class="page-btns" id="medicines-pages"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- PROCUREMENT -->
+        <div class="page" id="page-procurement">
+          <div class="section-header">
+            <div class="section-title">采购管理</div>
+            <div class="section-actions">
+              <button class="btn btn-primary" onclick="openModal('procurement')">+ 新增采购单</button>
+            </div>
+          </div>
+          <div class="filter-bar">
+            <label>状态</label>
+            <select onchange="filterTable('procurement',this.value,'status')">
+              <option value="">全部</option>
+              <option>待审核</option>
+              <option>已审核</option>
+              <option>已入库</option>
+              <option>已取消</option>
+            </select>
+            <label>日期</label>
+            <input type="date" id="proc-date-filter" onchange="filterTable('procurement',this.value,'date')">
+            <input type="text" placeholder="搜索采购单号/供应商..." oninput="filterTable('procurement',this.value,'search')"
+              style="margin-left:auto;">
+          </div>
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>采购单号</th>
+                  <th>药品名称</th>
+                  <th>供应商</th>
+                  <th>数量</th>
+                  <th>单价</th>
+                  <th>总金额</th>
+                  <th>采购日期</th>
+                  <th>经办人</th>
+                  <th>状态</th>
+                  <th>操作</th>
+                </tr>
+              </thead>
+              <tbody id="procurement-tbody"></tbody>
+            </table>
+            <div class="pagination">
+              <span id="procurement-info"></span>
+              <div class="page-btns" id="procurement-pages"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- SUPPLIERS -->
+        <div class="page" id="page-suppliers">
+          <div class="section-header">
+            <div class="section-title">供应商管理</div>
+            <div class="section-actions">
+              <button class="btn btn-primary" onclick="openModal('supplier')">+ 新增供应商</button>
+            </div>
+          </div>
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>供应商名称</th>
+                  <th>联系人</th>
+                  <th>联系电话</th>
+                  <th>地址</th>
+                  <th>信用评级</th>
+                  <th>合作状态</th>
+                  <th>操作</th>
+                </tr>
+              </thead>
+              <tbody id="suppliers-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- SALES -->
+        <div class="page" id="page-sales">
+          <div class="section-header">
+            <div class="section-title">销售管理</div>
+            <div class="section-actions">
+              <button class="btn btn-primary" onclick="openModal('sale')">+ 新增销售单</button>
+            </div>
+          </div>
+          <div class="filter-bar">
+            <label>状态</label>
+            <select onchange="filterTable('sales',this.value,'status')">
+              <option value="">全部</option>
+              <option>已完成</option>
+              <option>待确认</option>
+              <option>已退货</option>
+            </select>
+            <label>日期</label>
+            <input type="date" id="sale-date-filter" onchange="filterTable('sales',this.value,'date')">
+            <input type="text" placeholder="搜索单号/客户..." oninput="filterTable('sales',this.value,'search')"
+              style="margin-left:auto;">
+          </div>
+          <div class="table-container">
+            <table>
+              <thead>
+                <tr>
+                  <th>销售单号</th>
+                  <th>药品名称</th>
+                  <th>数量</th>
+                  <th>单价</th>
+                  <th>总金额</th>
+                  <th>客户</th>
+                  <th>销售日期</th>
+                  <th>销售人员</th>
+                  <th>状态</th>
+                  <th>操作</th>
+                </tr>
+              </thead>
+              <tbody id="sales-tbody"></tbody>
+            </table>
+            <div class="pagination">
+              <span id="sales-info"></span>
+              <div class="page-btns" id="sales-pages"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ MODALS ============ -->
+  <div class="modal-overlay" id="modal-overlay" onclick="closeModalOutside(event)">
+    <div class="modal" id="modal-box">
+      <div class="modal-header">
+        <span class="modal-title" id="modal-title">新增</span>
+        <button class="modal-close" onclick="closeModal()">✕</button>
+      </div>
+      <div class="modal-body" id="modal-body"></div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal()">取消</button>
+        <button class="btn btn-primary" onclick="saveModal()">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ALERT TOAST -->
+  <div class="alert" id="toast" style="display:none;"></div>
+
+  <script>
+    // ============ DATA ============
+    let currentUser = null;
+    let currentPage = 'dashboard';
+    let editingId = null;
+    let currentModalType = '';
+    let pages = {};
+
+    const API_BASE = '/api/v1';
+
+    const endpoints = {
+      users: '/users',
+      categories: '/categories',
+      medicines: '/medicines',
+      procurement: '/procurement',
+      suppliers: '/suppliers',
+      sales: '/sales',
+    };
+
+    const DB = {
+      users: [],
+      categories: [],
+      medicines: [],
+      procurement: [],
+      suppliers: [],
+      sales: []
+    };
+
+    function buildUrl(path, params) {
+      if (!params) return API_BASE + path;
+      const q = new URLSearchParams();
+      Object.keys(params).forEach(k => {
+        const v = params[k];
+        if (v === undefined || v === null || v === '') return;
+        q.set(k, String(v));
+      });
+      const qs = q.toString();
+      return API_BASE + path + (qs ? `?${qs}` : '');
+    }
+
+    async function apiRequest(path, { method = 'GET', body, params } = {}) {
+      const url = buildUrl(path, params);
+      
+      // 获取认证令牌
+      const token = localStorage.getItem('authToken');
+      const tokenType = localStorage.getItem('tokenType') || 'Bearer';
+      const headers = { 'content-type': 'application/json' };
+      
+      // 如果有令牌，添加到请求头
+      if (token) {
+        headers['Authorization'] = `${tokenType} ${token}`;
+      }
+      
+      const r = await fetch(url, {
+        method,
+        headers: headers,
+        body: body ? JSON.stringify(body) : undefined
+      });
+      const text = await r.text();
+      let json = null;
+      try { json = text ? JSON.parse(text) : null; } catch { json = null; }
+      if (!r.ok) {
+        const msg = (json && json.error) ? json.error : (json && json.message ? json.message : '请求失败');
+        throw new Error(typeof msg === 'string' ? msg : JSON.stringify(msg));
+      }
+      return json;
+    }
+
+    async function reloadDb(dbKey) {
+      try {
+        const r = await apiRequest(endpoints[dbKey], { params: { pageSize: 1000 } });
+        DB[dbKey] = r.data || [];
+      } catch (error) {
+        console.error(`❌ ${dbKey} 数据加载失败:`, error.message);
+        DB[dbKey] = [];
+      }
+    }
+
+    async function loadInitialData() {
+      await Promise.all(Object.keys(DB).map(k => reloadDb(k)));
+    }
+
+    // ============ LOGIN ============
+    async function doLogin() {
+      const u = document.getElementById('login-user').value;
+      const p = document.getElementById('login-pass').value;
+      const remember = document.getElementById('remember').checked;
+      const err = document.getElementById('login-error');
+
+      try {
+        const r = await apiRequest('/auth/login', { method: 'POST', body: { username: u, password: p } });
+        
+        // 存储用户信息和认证令牌
+        localStorage.setItem('authToken', r.data.token);
+        localStorage.setItem('tokenType', r.data.tokenType || 'Bearer');
+        localStorage.setItem('currentUser', JSON.stringify(r.data.user));
+        
+        // 记住我功能
+        if (remember) {
+          localStorage.setItem('rememberUser', u);
+        } else {
+          localStorage.removeItem('rememberUser');
+        }
+        
+        currentUser = r.data.user;
+        document.getElementById('user-name-disp').textContent = currentUser.name;
+        document.getElementById('user-role-disp').textContent = currentUser.role;
+        document.getElementById('user-avatar').textContent = currentUser.name[0];
+        err.style.display = 'none';
+        document.getElementById('login-screen').style.display = 'none';
+        document.getElementById('app').style.display = 'flex';
+        await initApp();
+      } catch (e) {
+        err.textContent = e.message || '账号或密码错误，请重试';
+        err.style.display = 'block';
+        document.getElementById('login-pass').style.borderColor = 'var(--accent-danger)';
+        setTimeout(() => document.getElementById('login-pass').style.borderColor = '', 1500);
+      }
+    }
+
+    document.getElementById('login-pass').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+    document.getElementById('login-user').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+
+    // ============ NAVIGATION ============
+    const pageMeta = {
+      dashboard: { title: '数据总览', desc: '实时监控系统运营数据' },
+      users: { title: '用户管理', desc: '管理系统用户账号与权限' },
+      categories: { title: '分类管理', desc: '维护药品分类信息' },
+      medicines: { title: '药品管理', desc: '管理药品基本信息与库存' },
+      procurement: { title: '采购管理', desc: '处理药品采购订单' },
+      suppliers: { title: '供应商管理', desc: '维护供应商合作信息' },
+      sales: { title: '销售管理', desc: '记录与追踪销售订单' },
+    };
+
+    function goto(name) {
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+      document.getElementById('page-' + name).classList.add('active');
+      document.querySelectorAll('.nav-item').forEach(n => {
+        if (n.getAttribute('onclick') && n.getAttribute('onclick').includes("'" + name + "'")) n.classList.add('active');
+      });
+      const meta = pageMeta[name];
+      document.getElementById('page-title').textContent = meta.title;
+      document.getElementById('page-desc').textContent = meta.desc;
+      currentPage = name;
+      renderPage(name);
+    }
+
+    // 检查用户认证状态
+    function checkAuth() {
+        const token = localStorage.getItem('authToken');
+        if (!token) {
+            showLoginScreen();
+            return false;
+        }
+        
+        // 验证令牌是否过期（简单检查）
+        try {
+            const payload = JSON.parse(atob(token.split('.')[1]));
+            const exp = payload.exp * 1000;
+            if (Date.now() >= exp) {
+                logout();
+                return false;
+            }
+        } catch (e) {
+            logout();
+            return false;
+        }
+        
+        return true;
+    }
+    
+    // 显示登录界面
+    function showLoginScreen() {
+        document.getElementById('app').style.display = 'none';
+        document.getElementById('login-screen').style.display = 'flex';
+        document.getElementById('login-pass').value = '';
+        
+        // 自动填充记住的用户名
+        const rememberUser = localStorage.getItem('rememberUser');
+        if (rememberUser) {
+            document.getElementById('login-user').value = rememberUser;
+            document.getElementById('remember').checked = true;
+        } else {
+            document.getElementById('login-user').value = '';
+            document.getElementById('remember').checked = false;
+        }
+    }
+
+    // 登出功能
+    function logout() {
+        localStorage.removeItem('authToken');
+        localStorage.removeItem('tokenType');
+        localStorage.removeItem('currentUser');
+        currentUser = null;
+        showLoginScreen();
+    }
+
+    // 页面加载时检查认证状态
+    window.addEventListener('load', function() {
+        if (window.location.hash === '#login' || !checkAuth()) {
+            showLoginScreen();
+        } else {
+            const savedUser = localStorage.getItem('currentUser');
+            if (savedUser) {
+              try { currentUser = JSON.parse(savedUser); } catch { currentUser = null; }
+            }
+            if (currentUser) {
+              document.getElementById('user-name-disp').textContent = currentUser.name;
+              document.getElementById('user-role-disp').textContent = currentUser.role;
+              document.getElementById('user-avatar').textContent = currentUser.name[0];
+              document.getElementById('login-screen').style.display = 'none';
+              document.getElementById('app').style.display = 'flex';
+            }
+            initApp();
+        }
+    });
+
+
+    function renderPage(name) {
+      if (name === 'users') renderUsers();
+      else if (name === 'categories') renderCategories();
+      else if (name === 'medicines') renderMedicines();
+      else if (name === 'procurement') renderProcurement();
+      else if (name === 'suppliers') renderSuppliers();
+      else if (name === 'sales') renderSales();
+    }
+
+    // ============ INIT ============
+    function setBadge(id, value) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      const n = Number(value) || 0;
+      el.textContent = String(n);
+      el.style.display = n > 0 ? 'inline-flex' : 'none';
+    }
+
+    function updateBadges() {
+      const warn = DB.medicines.filter(m => m.status === '预警').length;
+      setBadge('badge-medicines', warn);
+    }
+
+    async function initApp() {
+      await loadInitialData();
+      renderMedicineCatFilter();
+      await renderDashboard();
+      renderPage(currentPage);
+      updateBadges();
+    }
+
+    // ============ DASHBOARD ============
+    async function renderDashboard() {
+      let stats = null;
+      try {
+        stats = (await apiRequest('/stats')).data;
+      } catch {
+        stats = null;
+      }
+
+      if (stats) {
+        document.getElementById('stat-medicines-total').textContent = stats.medicinesTotal.toLocaleString();
+        document.getElementById('stat-procurement-month').textContent = '¥ ' + stats.procurementMonthTotal.toLocaleString();
+        document.getElementById('stat-sales-month').textContent = '¥ ' + stats.salesMonthTotal.toLocaleString();
+        document.getElementById('stat-stock-warning').textContent = stats.stockWarningTotal.toLocaleString();
+
+        const changeEl4 = document.getElementById('stat-change-stock');
+        if (stats.stockWarningTotal > 0) {
+          changeEl4.textContent = '需要立即处理';
+          changeEl4.style.color = 'var(--accent-danger)';
+        } else {
+          changeEl4.textContent = '库存充足';
+          changeEl4.style.color = 'var(--accent-success)';
+        }
+
+        const procChange = stats.procurementLastMonth > 0
+          ? (((stats.procurementMonthTotal - stats.procurementLastMonth) / stats.procurementLastMonth) * 100).toFixed(1)
+          : (stats.procurementMonthTotal > 0 ? '100' : '0');
+        const procSymbol = stats.procurementMonthTotal >= stats.procurementLastMonth ? '↑' : '↓';
+        document.getElementById('stat-change-procurement').textContent = procSymbol + ' ' + procChange + '% 较上月';
+
+        const salesChange = stats.salesLastMonth > 0
+          ? (((stats.salesMonthTotal - stats.salesLastMonth) / stats.salesLastMonth) * 100).toFixed(1)
+          : (stats.salesMonthTotal > 0 ? '100' : '0');
+        const salesSymbol = stats.salesMonthTotal >= stats.salesLastMonth ? '↑' : '↓';
+        document.getElementById('stat-change-sales').textContent = salesSymbol + ' ' + salesChange + '% 较上月';
+
+        const chart = document.getElementById('sales-chart');
+        if (stats.dailySales && stats.dailySales.length > 0) {
+          const max = Math.max(...stats.dailySales.map(d => d.total), 1);
+          chart.innerHTML = stats.dailySales.map(d => `<div class="bar" style="height:${(d.total / max * 100)}%" title="${(d.total / 10000).toFixed(1)}万元"></div>`).join('');
+        } else {
+          chart.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:20px;">暂无销售数据</div>';
+        }
+
+        const warnBadge = document.getElementById('warn-count-badge');
+        if (warnBadge) {
+          warnBadge.textContent = stats.alerts.length + ' 项';
+          warnBadge.style.display = stats.alerts.length > 0 ? 'inline-flex' : 'none';
+        }
+      }
+
+      // Alerts
+      const alerts = stats ? stats.alerts.filter(a => DB.medicines.some(m => m.id === a.id && m.status === '预警')) : DB.medicines.filter(m => m.status === '预警');
+      const al = document.getElementById('alert-list');
+      al.innerHTML = alerts.map(m => `
+    <div class="alert-item">
+      <div class="alert-dot red"></div>
+      <div>
+        <div style="font-size:14px;font-weight:500;">${m.name}</div>
+        <div style="font-size:12px;color:var(--text-secondary);margin-top:2px;">库存仅剩 <span style="color:var(--accent-danger);font-weight:600;">${m.stock}</span> 件 · 有效期至 ${m.expire}</div>
+      </div>
+      <button class="btn btn-warning btn-sm" style="margin-left:auto;white-space:nowrap;" onclick="openModal('procurement')">补货</button>
+    </div>`).join('') +
+        (stats ? stats.alerts.filter(m => !alerts.some(a => a.id === m.id)) : DB.medicines.filter(m => m.status === '不足')).map(m => `
+    <div class="alert-item">
+      <div class="alert-dot yellow"></div>
+      <div>
+        <div style="font-size:14px;font-weight:500;">${m.name}</div>
+        <div style="font-size:12px;color:var(--text-secondary);margin-top:2px;">库存 <span style="color:var(--accent-warning);font-weight:600;">${m.stock}</span> 件，即将不足</div>
+      </div>
+    </div>`).join('');
+
+      // Recent sales
+      const tb = document.getElementById('recent-sales');
+      const rs = stats ? stats.recentSales : DB.sales.slice(0, 5);
+      tb.innerHTML = rs.slice(0, 5).map(s => `
+    <tr>
+      <td style="font-family:Rajdhani,sans-serif;color:var(--accent-secondary);">${s.code}</td>
+      <td>${s.medicine}</td>
+      <td>${s.qty}</td>
+      <td style="color:var(--accent-primary);">¥${s.total.toLocaleString()}</td>
+      <td>${s.customer}</td>
+      <td style="color:var(--text-secondary);">${s.date}</td>
+      <td>${badgeHtml(s.status)}</td>
+    </tr>`).join('');
+
+      updateBadges();
+    }
+
+    // ============ BADGE ============
+    function badgeHtml(s) {
+      const map = {
+        '启用': 'success', '禁用': 'danger', '充足': 'success', '预警': 'danger', '不足': 'warning',
+        '已完成': 'success', '待确认': 'warning', '已退货': 'danger',
+        '已入库': 'success', '已审核': 'info', '待审核': 'warning', '已取消': 'danger',
+        '合作中': 'success', '暂停': 'danger',
+        'A+级': 'success', 'A级': 'info', 'B级': 'warning',
+        // 角色映射
+        '超级管理员': 'info', '管理员': 'info',
+        '普通用户': 'neutral',
+      };
+      
+      const displayText = s;
+      const cls = map[s] || 'neutral';
+      return `<span class="badge badge-${cls}">${displayText}</span>`;
+    }
+
+    // ============ USERS ============
+    function renderUsers(data) {
+      const d = data || DB.users;
+      const pg = pages.users || 1;
+      const ps = 8;
+      const total = d.length;
+      const slice = d.slice((pg - 1) * ps, pg * ps);
+
+      document.getElementById('users-tbody').innerHTML = slice.map(u => `
+    <tr>
+      <td style="color:var(--text-muted);">${u.id}</td>
+      <td style="font-family:Rajdhani,sans-serif;font-weight:600;">${u.username}</td>
+      <td>${u.name}</td>
+      <td style="color:var(--text-secondary);">${u.phone}</td>
+      <td>${badgeHtml(u.role)}</td>
+      <td>${badgeHtml(u.status)}</td>
+      <td style="color:var(--text-secondary);">${u.created}</td>
+      <td>
+        <div class="table-actions">
+          <button class="btn btn-warning btn-sm" onclick="editItem('user',${u.id})">编辑</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteItem('users',${u.id})">删除</button>
+        </div>
+      </td>
+    </tr>`).join('') || '<tr><td colspan="8"><div class="empty-state"><div class="icon">👥</div><p>暂无用户数据</p></div></td></tr>';
+
+      document.getElementById('users-info').textContent = `共 ${total} 条记录`;
+      renderPager('users', total, pg, ps);
+    }
+
+    // ============ CATEGORIES ============
+    function renderCategories() {
+      document.getElementById('categories-tbody').innerHTML = DB.categories.map(c => `
+    <tr>
+      <td style="color:var(--text-muted);">${c.id}</td>
+      <td style="font-weight:500;">${c.name}</td>
+      <td style="font-family:Rajdhani,sans-serif;color:var(--accent-secondary);">${c.code}</td>
+      <td style="color:var(--text-secondary);font-size:13px;">${c.desc}</td>
+      <td><span style="color:var(--accent-primary);font-weight:600;">${c.count}</span></td>
+      <td>${c.sort}</td>
+      <td>${badgeHtml(c.status)}</td>
+      <td>
+        <div class="table-actions">
+          <button class="btn btn-warning btn-sm" onclick="editItem('category',${c.id})">编辑</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteItem('categories',${c.id})">删除</button>
+        </div>
+      </td>
+    </tr>`).join('') || '<tr><td colspan="8"><div class="empty-state"><div class="icon">🗂️</div><p>暂无分类数据</p></div></td></tr>';
+    }
+
+    // ============ MEDICINES ============
+    async function renderMedicineCatFilter() {
+      const sel = document.getElementById('med-cat-filter');
+      if (!sel) return;
+      sel.innerHTML = '<option value="">全部</option>';
+      try {
+        const res = await apiRequest('/categories?page=1&pageSize=100');
+        res.data.forEach(c => {
+          const o = document.createElement('option');
+          o.value = c.name;
+          o.textContent = c.name;
+          sel.appendChild(o);
+        });
+      } catch (e) {
+        console.error('加载药品分类过滤失败', e);
+      }
+    }
+
+    function clearMedSearch() {
+      document.getElementById('med-search-input').value = '';
+      document.getElementById('med-cat-filter').value = '';
+      pages.medicines = 1;
+      renderMedicines();
+    }
+
+    function renderMedicines(data) {
+      let d = data || DB.medicines;
+      const catFilter = document.getElementById('med-cat-filter');
+      if (!data && catFilter && catFilter.value) {
+        d = d.filter(m => m.category === catFilter.value);
+      }
+      const pg = pages.medicines || 1;
+      const ps = 8;
+      const total = d.length;
+      const slice = d.slice((pg - 1) * ps, pg * ps);
+
+      document.getElementById('medicines-tbody').innerHTML = slice.map(m => `
+    <tr>
+      <td style="font-family:Rajdhani,sans-serif;color:var(--accent-secondary);">${m.code}</td>
+      <td style="font-weight:500;">${m.name}</td>
+      <td>${m.category}</td>
+      <td style="font-size:13px;color:var(--text-secondary);">${m.spec}</td>
+      <td style="color:var(--accent-primary);">¥${m.price}</td>
+      <td>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <div class="progress" style="width:60px">
+            <div class="progress-bar" style="width:${Math.min(m.stock / 500 * 100, 100)}%;background:${m.stock < 20 ? 'var(--accent-danger)' : m.stock < 50 ? 'var(--accent-warning)' : 'linear-gradient(90deg,var(--accent-primary),var(--accent-secondary))'}"></div>
+          </div>
+          <span style="${m.stock < 20 ? 'color:var(--accent-danger)' : m.stock < 50 ? 'color:var(--accent-warning)' : ''}">${m.stock}</span>
+        </div>
+      </td>
+      <td style="font-size:13px;color:var(--text-secondary);">${m.expire}</td>
+      <td style="font-size:13px;color:var(--text-secondary);">${m.maker}</td>
+      <td>${badgeHtml(m.status)}</td>
+      <td>
+        <div class="table-actions">
+          <button class="btn btn-warning btn-sm" onclick="editItem('medicine',${m.id})">编辑</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteItem('medicines',${m.id})">删除</button>
+        </div>
+      </td>
+    </tr>`).join('') || '<tr><td colspan="10"><div class="empty-state"><div class="icon">💉</div><p>暂无药品数据</p></div></td></tr>';
+
+      document.getElementById('medicines-info').textContent = `共 ${total} 条记录`;
+      renderPager('medicines', total, pg, ps);
+    }
+
+    // ============ PROCUREMENT ============
+    function renderProcurement(data) {
+      const d = data || DB.procurement;
+      const pg = pages.procurement || 1;
+      const ps = 8;
+      const total = d.length;
+      const slice = d.slice((pg - 1) * ps, pg * ps);
+
+      document.getElementById('procurement-tbody').innerHTML = slice.map(p => `
+    <tr>
+      <td style="font-family:Rajdhani,sans-serif;color:var(--accent-secondary);">${p.code}</td>
+      <td style="font-weight:500;">${p.medicine}</td>
+      <td>${p.supplier}</td>
+      <td>${p.qty}</td>
+      <td style="color:var(--text-secondary);">¥${p.price}</td>
+      <td style="color:var(--accent-primary);font-weight:600;">¥${p.total.toLocaleString()}</td>
+      <td style="color:var(--text-secondary);">${p.date}</td>
+      <td>${p.operator}</td>
+      <td>${badgeHtml(p.status)}</td>
+      <td>
+        <div class="table-actions">
+          ${p.status === '待审核' ? `<button class="btn btn-primary btn-sm" onclick="approveProc(${p.id})">审核</button>` : ''}
+          <button class="btn btn-warning btn-sm" onclick="editItem('procurement',${p.id})">编辑</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteItem('procurement',${p.id})">删除</button>
+        </div>
+      </td>
+    </tr>`).join('') || '<tr><td colspan="10"><div class="empty-state"><div class="icon">📦</div><p>暂无采购数据</p></div></td></tr>';
+
+      document.getElementById('procurement-info').textContent = `共 ${total} 条记录`;
+      renderPager('procurement', total, pg, ps);
+    }
+
+    async function approveProc(id) {
+      try {
+        await apiRequest(`${endpoints.procurement}/${id}/approve`, { method: 'POST' });
+        await reloadDb('procurement');
+        await reloadDb('medicines');
+        renderProcurement();
+        renderMedicines();
+        toast('采购单已审核通过，库存已更新', 'success');
+        await renderDashboard();
+        updateBadges();
+      } catch (e) {
+        toast(e.message || '操作失败', 'error');
+      }
+    }
+
+    async function approveSale(id) {
+      try {
+        await apiRequest(`${endpoints.sales}/${id}/approve`, { method: 'POST' });
+        await reloadDb('sales');
+        await reloadDb('medicines');
+        renderSales();
+        renderMedicines();
+        toast('销售单已确认，库存已更新', 'success');
+        await renderDashboard();
+        updateBadges();
+      } catch (e) {
+        toast(e.message || '操作失败', 'error');
+      }
+    }
+
+    // ============ SUPPLIERS ============
+    function renderSuppliers() {
+      document.getElementById('suppliers-tbody').innerHTML = DB.suppliers.map(s => `
+    <tr>
+      <td style="color:var(--text-muted);">${s.id}</td>
+      <td style="font-weight:500;">${s.name}</td>
+      <td>${s.contact}</td>
+      <td style="color:var(--text-secondary);">${s.phone}</td>
+      <td style="font-size:13px;color:var(--text-secondary);">${s.address}</td>
+      <td>${badgeHtml(s.rating)}</td>
+      <td>${badgeHtml(s.status)}</td>
+      <td>
+        <div class="table-actions">
+          <button class="btn btn-warning btn-sm" onclick="editItem('supplier',${s.id})">编辑</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteItem('suppliers',${s.id})">删除</button>
+        </div>
+      </td>
+    </tr>`).join('') || '<tr><td colspan="8"><div class="empty-state"><div class="icon">🏭</div><p>暂无供应商数据</p></div></td></tr>';
+    }
+
+    // ============ SALES ============
+    function renderSales(data) {
+      const d = data || DB.sales;
+      const pg = pages.sales || 1;
+      const ps = 8;
+      const total = d.length;
+      const slice = d.slice((pg - 1) * ps, pg * ps);
+
+      document.getElementById('sales-tbody').innerHTML = slice.map(s => `
+    <tr>
+      <td style="font-family:Rajdhani,sans-serif;color:var(--accent-secondary);">${s.code}</td>
+      <td style="font-weight:500;">${s.medicine}</td>
+      <td>${s.qty}</td>
+      <td style="color:var(--text-secondary);">¥${s.price}</td>
+      <td style="color:var(--accent-primary);font-weight:600;">¥${s.total.toLocaleString()}</td>
+      <td>${s.customer}</td>
+      <td style="color:var(--text-secondary);">${s.date}</td>
+      <td>${s.seller}</td>
+      <td>${badgeHtml(s.status)}</td>
+      <td>
+        <div class="table-actions">
+          ${s.status === '待确认' ? `<button class="btn btn-primary btn-sm" onclick="approveSale(${s.id})">确认</button>` : ''}
+          <button class="btn btn-warning btn-sm" onclick="editItem('sale',${s.id})">编辑</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteItem('sales',${s.id})">删除</button>
+        </div>
+      </td>
+    </tr>`).join('');
+
+      document.getElementById('sales-info').textContent = `共 ${total} 条记录`;
+      renderPager('sales', total, pg, ps);
+    }
+
+    // ============ PAGINATION ============
+    function renderPager(name, total, pg, ps) {
+      const totalPages = Math.ceil(total / ps) || 1;
+      const container = document.getElementById(name + '-pages');
+      let html = `<div class="page-btn" onclick="gotoPage('${name}',${pg - 1})">‹</div>`;
+      for (let i = 1; i <= totalPages; i++) {
+        html += `<div class="page-btn${i === pg ? ' active' : ''}" onclick="gotoPage('${name}',${i})">${i}</div>`;
+      }
+      html += `<div class="page-btn" onclick="gotoPage('${name}',${pg + 1})">›</div>`;
+      container.innerHTML = html;
+    }
+
+    function gotoPage(name, pg) {
+      const d = name === 'users' ? DB.users : name === 'medicines' ? DB.medicines : name === 'procurement' ? DB.procurement : DB.sales;
+      const maxPg = Math.ceil(d.length / 8) || 1;
+      if (pg < 1 || pg > maxPg) return;
+      pages[name] = pg;
+      renderPage(name);
+    }
+
+    // ============ FILTER ============
+    function filterTable(name, val, type) {
+      let d = name === 'users' ? DB.users : name === 'medicines' ? DB.medicines : name === 'procurement' ? DB.procurement : name === 'sales' ? DB.sales : [];
+      if (!val) { renderPage(name); return; }
+
+      if (type === 'search') d = d.filter(r => Object.values(r).some(v => String(v).includes(val)));
+      else if (type === 'status') d = d.filter(r => r.status === val);
+      else if (type === 'role') d = d.filter(r => r.role === val);
+      else if (type === 'stock') d = d.filter(r => r.status === val);
+      else if (type === 'date') d = d.filter(r => r.date === val);
+
+      if (name === 'medicines' && type === 'search') document.getElementById('med-cat-filter').value = '';
+      pages[name] = 1;
+      if (name === 'users') renderUsers(d);
+      else if (name === 'medicines') renderMedicines(d);
+      else if (name === 'procurement') renderProcurement(d);
+      else if (name === 'sales') renderSales(d);
+    }
+
+    function globalSearch(val) {
+      if (!val) return;
+      const meds = DB.medicines.filter(m => m.name.includes(val) || m.code.includes(val));
+      if (meds.length) { goto('medicines'); pages.medicines = 1; renderMedicines(meds); }
+    }
+
+    function clearGlobalSearch() {
+      document.getElementById('global-search').value = '';
+      if (currentPage === 'medicines') {
+        renderMedicines();
+      }
+    }
+
+    // ============ MODAL ============
+    const modalForms = {
+      user: () => `
+    <div class="form-row">
+      <div class="form-group"><label>用户名</label><input id="f-username" placeholder="登录账号"></div>
+      <div class="form-group"><label>姓名</label><input id="f-name" placeholder="真实姓名"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>手机号</label><input id="f-phone" placeholder="138xxxx"></div>
+      <div class="form-group"><label>角色</label>
+        <select id="f-role"><option>超级管理员</option><option>管理员</option><option selected>普通用户</option></select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>密码</label><input type="password" id="f-pass" placeholder="设置密码"></div>
+      <div class="form-group"><label>状态</label>
+        <select id="f-status"><option>启用</option><option>禁用</option></select>
+      </div>
+    </div>`,
+
+      category: () => `
+    <div class="form-row">
+      <div class="form-group"><label>分类名称</label><input id="f-name" placeholder="分类名称"></div>
+      <div class="form-group"><label>分类编码</label><input id="f-code" placeholder="如 KS001"></div>
+    </div>
+    <div class="form-group"><label>描述</label><textarea id="f-desc" placeholder="分类说明"></textarea></div>
+    <div class="form-row">
+      <div class="form-group"><label>排序</label><input type="number" id="f-sort" value="1"></div>
+      <div class="form-group"><label>状态</label>
+        <select id="f-status"><option>启用</option><option>禁用</option></select>
+      </div>
+    </div>`,
+
+      medicine: () => `
+    <div class="form-row">
+      <div class="form-group"><label>药品编码</label><input id="f-code" placeholder="YP001"></div>
+      <div class="form-group"><label>药品名称</label><input id="f-name" placeholder="药品全称"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>分类</label>
+        <select id="f-category"><option value="">加载中...</option></select>
+      </div>
+      <div class="form-group"><label>规格</label><input id="f-spec" placeholder="如 0.5g×24粒"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>单价(¥)</label><input type="number" id="f-price" placeholder="0.00"></div>
+      <div class="form-group"><label>库存</label><input type="number" id="f-stock" placeholder="数量"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>有效期</label><input type="date" id="f-expire"></div>
+      <div class="form-group"><label>生产厂家</label><input id="f-maker" placeholder="厂家全称"></div>
+    </div>`,
+
+      procurement: () => `
+    <div class="form-row">
+      <div class="form-group"><label>药品名称</label>
+        <select id="f-medicine"><option value="">加载中...</option></select>
+      </div>
+      <div class="form-group"><label>供应商</label>
+        <select id="f-supplier"><option value="">加载中...</option></select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>采购数量</label><input type="number" id="f-qty" placeholder="数量" oninput="calcTotal('proc')"></div>
+      <div class="form-group"><label>单价(¥)</label><input type="number" id="f-price" placeholder="0.00" oninput="calcTotal('proc')"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>总金额</label><input id="f-total" placeholder="自动计算" readonly style="color:var(--accent-primary)"></div>
+      <div class="form-group"><label>采购日期</label><input type="date" id="f-date"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>经办人</label><input id="f-operator" placeholder="经办人姓名"></div>
+      <div class="form-group"><label>状态</label>
+        <select id="f-status"><option>待审核</option><option>已审核</option><option>已入库</option><option>已取消</option></select>
+      </div>
+    </div>
+    <div class="form-group"><label>备注</label><textarea id="f-note" placeholder="备注信息"></textarea></div>`,
+
+      supplier: () => `
+    <div class="form-row">
+      <div class="form-group"><label>供应商名称</label><input id="f-name" placeholder="公司全称"></div>
+      <div class="form-group"><label>联系人</label><input id="f-contact" placeholder="联系人姓名"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>联系电话</label><input id="f-phone" placeholder="010-xxxx"></div>
+      <div class="form-group"><label>信用评级</label>
+        <select id="f-rating"><option>A+级</option><option>A级</option><option>B级</option><option>C级</option></select>
+      </div>
+    </div>
+    <div class="form-group"><label>地址</label><input id="f-address" placeholder="详细地址"></div>
+    <div class="form-group"><label>合作状态</label>
+      <select id="f-status"><option>合作中</option><option>暂停</option></select>
+    </div>`,
+
+      sale: () => `
+    <div class="form-row">
+      <div class="form-group"><label>药品名称</label>
+        <select id="f-medicine"><option value="">加载中...</option></select>
+      </div>
+      <div class="form-group"><label>客户</label><input id="f-customer" placeholder="客户/机构名称"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>数量</label><input type="number" id="f-qty" placeholder="数量" oninput="calcTotal('sale')"></div>
+      <div class="form-group"><label>单价(¥)</label><input type="number" id="f-price" placeholder="0.00" oninput="calcTotal('sale')"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>总金额</label><input id="f-total" placeholder="自动计算" readonly style="color:var(--accent-primary)"></div>
+      <div class="form-group"><label>销售日期</label><input type="date" id="f-date"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>销售人员</label><input id="f-seller" placeholder="销售人员姓名"></div>
+      <div class="form-group"><label>状态</label>
+        <select id="f-status"><option>待确认</option><option>已完成</option><option>已退货</option></select>
+      </div>
+    </div>`,
+    };
+
+    function calcTotal(type) {
+      const qty = parseFloat(document.getElementById('f-qty')?.value) || 0;
+      const price = parseFloat(document.getElementById('f-price')?.value) || 0;
+      const t = document.getElementById('f-total');
+      if (t) t.value = '¥' + (qty * price).toFixed(2);
+    }
+
+    async function openModal(type, title) {
+      currentModalType = type;
+      editingId = null;
+      document.getElementById('modal-title').textContent = '新增' + { user: '用户', category: '分类', medicine: '药品', procurement: '采购单', supplier: '供应商', sale: '销售单' }[type];
+      document.getElementById('modal-body').innerHTML = modalForms[type]();
+      document.getElementById('modal-overlay').classList.add('active');
+      const d = new Date().toISOString().split('T')[0];
+      const df = document.getElementById('f-date');
+      if (df) df.value = d;
+
+      try {
+        if (type === 'medicine') {
+          const res = await apiRequest('/categories?page=1&pageSize=100');
+          const sel = document.getElementById('f-category');
+          if (sel) sel.innerHTML = res.data.map(c => `<option>${c.name}</option>`).join('');
+        } else if (type === 'procurement') {
+          const [meds, sups] = await Promise.all([
+            apiRequest('/medicines?page=1&pageSize=100'),
+            apiRequest('/suppliers?page=1&pageSize=100')
+          ]);
+          const mSel = document.getElementById('f-medicine');
+          if (mSel) mSel.innerHTML = meds.data.map(m => `<option>${m.name}</option>`).join('');
+          const sSel = document.getElementById('f-supplier');
+          if (sSel) sSel.innerHTML = sups.data.map(s => `<option>${s.name}</option>`).join('');
+        } else if (type === 'sale') {
+          const meds = await apiRequest('/medicines?page=1&pageSize=100');
+          const mSel = document.getElementById('f-medicine');
+          if (mSel) mSel.innerHTML = meds.data.map(m => `<option>${m.name}</option>`).join('');
+        }
+      } catch (e) {
+        console.error('加载下拉选项失败', e);
+      }
+    }
+
+    async function editItem(type, id) {
+      currentModalType = type;
+      editingId = id;
+      const dbKey = { user: 'users', category: 'categories', medicine: 'medicines', procurement: 'procurement', supplier: 'suppliers', sale: 'sales' }[type];
+      const item = DB[dbKey].find(r => r.id === id);
+      if (!item) return;
+
+      const labels = { user: '编辑用户', category: '编辑分类', medicine: '编辑药品', procurement: '编辑采购单', supplier: '编辑供应商', sale: '编辑销售单' };
+      document.getElementById('modal-title').textContent = labels[type];
+      document.getElementById('modal-body').innerHTML = modalForms[type]();
+      document.getElementById('modal-overlay').classList.add('active');
+
+      try {
+        if (type === 'medicine') {
+          const res = await apiRequest('/categories?page=1&pageSize=100');
+          const sel = document.getElementById('f-category');
+          if (sel) sel.innerHTML = res.data.map(c => `<option>${c.name}</option>`).join('');
+        } else if (type === 'procurement') {
+          const [meds, sups] = await Promise.all([
+            apiRequest('/medicines?page=1&pageSize=100'),
+            apiRequest('/suppliers?page=1&pageSize=100')
+          ]);
+          const mSel = document.getElementById('f-medicine');
+          if (mSel) mSel.innerHTML = meds.data.map(m => `<option>${m.name}</option>`).join('');
+          const sSel = document.getElementById('f-supplier');
+          if (sSel) sSel.innerHTML = sups.data.map(s => `<option>${s.name}</option>`).join('');
+        } else if (type === 'sale') {
+          const meds = await apiRequest('/medicines?page=1&pageSize=100');
+          const mSel = document.getElementById('f-medicine');
+          if (mSel) mSel.innerHTML = meds.data.map(m => `<option>${m.name}</option>`).join('');
+        }
+      } catch (e) {
+        console.error('加载下拉选项失败', e);
+      }
+
+      // Fill form
+      Object.keys(item).forEach(k => {
+        const el = document.getElementById('f-' + k);
+        if (el) el.value = item[k];
+      });
+    }
+
+    function closeModal() { document.getElementById('modal-overlay').classList.remove('active'); }
+    function closeModalOutside(e) { if (e.target === document.getElementById('modal-overlay')) closeModal(); }
+
+    async function saveModal() {
+      const type = currentModalType;
+      const dbKey = { user: 'users', category: 'categories', medicine: 'medicines', procurement: 'procurement', supplier: 'suppliers', sale: 'sales' }[type];
+      const getVal = id => { const el = document.getElementById(id); return el ? el.value : ''; };
+
+      let body = {};
+      if (type === 'user') {
+        const pass = getVal('f-pass');
+        body = {
+          username: getVal('f-username'),
+          name: getVal('f-name'),
+          phone: getVal('f-phone'),
+          role: getVal('f-role'),
+          status: getVal('f-status'),
+          created: new Date().toISOString().split('T')[0],
+          ...(pass ? { password: pass } : {})
+        };
+      } else if (type === 'category') {
+        body = {
+          name: getVal('f-name'),
+          code: getVal('f-code'),
+          desc: getVal('f-desc'),
+          sort: parseInt(getVal('f-sort')) || 1,
+          status: getVal('f-status')
+        };
+      } else if (type === 'medicine') {
+        body = {
+          code: getVal('f-code'),
+          name: getVal('f-name'),
+          category: getVal('f-category'),
+          spec: getVal('f-spec'),
+          price: parseFloat(getVal('f-price')) || 0,
+          stock: parseInt(getVal('f-stock')) || 0,
+          expire: getVal('f-expire'),
+          maker: getVal('f-maker')
+        };
+      } else if (type === 'procurement') {
+        const qty = parseInt(getVal('f-qty')) || 0;
+        const price = parseFloat(getVal('f-price')) || 0;
+        const date = getVal('f-date') || new Date().toISOString().split('T')[0];
+        
+        // 验证必填字段
+        if (!getVal('f-medicine')) {
+          toast('请选择药品', 'error');
+          return;
+        }
+        if (!getVal('f-supplier')) {
+          toast('请选择供应商', 'error');
+          return;
+        }
+        if (qty <= 0) {
+          toast('采购数量必须大于0', 'error');
+          return;
+        }
+        if (price < 0) {
+          toast('采购单价不能为负数', 'error');
+          return;
+        }
+        
+        body = {
+          code: 'PO' + Date.now(),
+          medicine: getVal('f-medicine'),
+          supplier: getVal('f-supplier'),
+          qty,
+          price,
+          date: date,
+          operator: getVal('f-operator') || (currentUser ? currentUser.name : ''),
+          status: getVal('f-status') || '待审核',
+          note: getVal('f-note') || ''
+        };
+      } else if (type === 'supplier') {
+        body = {
+          name: getVal('f-name'),
+          contact: getVal('f-contact'),
+          phone: getVal('f-phone'),
+          address: getVal('f-address'),
+          rating: getVal('f-rating'),
+          status: getVal('f-status')
+        };
+      } else if (type === 'sale') {
+        const qty = parseInt(getVal('f-qty')) || 0;
+        const price = parseFloat(getVal('f-price')) || 0;
+        const date = getVal('f-date') || new Date().toISOString().split('T')[0];
+        
+        // 验证必填字段
+        if (!getVal('f-medicine')) {
+          toast('请选择药品', 'error');
+          return;
+        }
+        if (!getVal('f-customer')) {
+          toast('请输入客户名称', 'error');
+          return;
+        }
+        if (qty <= 0) {
+          toast('销售数量必须大于0', 'error');
+          return;
+        }
+        if (price < 0) {
+          toast('销售单价不能为负数', 'error');
+          return;
+        }
+        
+        body = {
+          code: 'SO' + Date.now(),
+          medicine: getVal('f-medicine'),
+          qty,
+          price,
+          customer: getVal('f-customer'),
+          date: date,
+          seller: getVal('f-seller') || (currentUser ? currentUser.name : ''),
+          status: getVal('f-status') || '待确认'
+        };
+      }
+
+      try {
+        const ep = endpoints[dbKey];
+        if (editingId) {
+          const updateBody = { ...body };
+          delete updateBody.created;
+          if (type === 'procurement' || type === 'sale') delete updateBody.code;
+          await apiRequest(`${ep}/${editingId}`, { method: 'PUT', body: updateBody });
+          toast('修改成功', 'success');
+        } else {
+          await apiRequest(ep, { method: 'POST', body });
+          if (type === 'procurement') {
+            toast('采购单已创建，请前往采购管理进行审核，审核后自动加入库存', 'success');
+          } else {
+            toast('添加成功', 'success');
+          }
+        }
+
+        closeModal();
+        await reloadDb(dbKey);
+        if (type === 'medicine') await reloadDb('categories');
+        if (type === 'procurement' || type === 'sale' || type === 'medicine') {
+          await reloadDb('medicines');
+          renderMedicines();
+          updateBadges();
+        }
+        if (type === 'category') renderMedicineCatFilter();
+        renderPage(currentPage);
+        await renderDashboard();
+      } catch (e) {
+        toast(e.message || '保存失败', 'error');
+      }
+    }
+
+    async function deleteItem(dbKey, id) {
+      // 根据类型给出不同的确认提示
+      let confirmMsg = '确定要删除该条记录吗？';
+      if (dbKey === 'medicines') {
+        confirmMsg = '注意：如果该药品已有采购或销售记录，将无法删除。确定要删除吗？';
+      } else if (dbKey === 'categories') {
+        confirmMsg = '注意：如果该分类下有药品，将无法删除。确定要删除吗？';
+      }
+      
+      if (!confirm(confirmMsg)) return;
+      
+      try {
+        await apiRequest(`${endpoints[dbKey]}/${id}`, { method: 'DELETE' });
+        await reloadDb(dbKey);
+        if (dbKey === 'medicines') await reloadDb('categories');
+        if (dbKey === 'procurement' || dbKey === 'sales' || dbKey === 'medicines') {
+          await reloadDb('medicines');
+          renderMedicines();
+          updateBadges();
+        }
+        if (dbKey === 'categories') renderMedicineCatFilter();
+        toast('删除成功', 'success');
+        renderPage(currentPage);
+        await renderDashboard();
+      } catch (e) {
+        // 显示更友好的错误信息
+        const errorMsg = e.message || '删除失败';
+        if (errorMsg.includes('已产生订单记录') || errorMsg.includes('关联')) {
+          toast('该记录已被其他数据引用，无法删除', 'error');
+        } else {
+          toast(errorMsg, 'error');
+        }
+      }
+    }
+
+    // ============ TOAST ============
+    function toast(msg, type = 'success') {
+      const el = document.getElementById('toast');
+      el.className = `alert alert-${type}`;
+      el.textContent = (type === 'success' ? '✓ ' : '✗ ') + msg;
+      el.style.display = 'flex';
+      clearTimeout(el._t);
+      el._t = setTimeout(() => { el.style.display = 'none'; }, 3000);
+    }
+  </script>
+</body>
+
+</html>
