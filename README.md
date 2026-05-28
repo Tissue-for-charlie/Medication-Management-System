@@ -1,62 +1,129 @@
-# Pharma Sys（医药综合管理平台）
+# 医药综合管理平台 v1.0
 
-本项目为“前后端分离”的本地演示应用：
-
-- 前端：单页 HTML（通过 Fetch 调用后端 REST API）
-- 后端：Node.js + Express
-- 数据库：MySQL
-
-默认本地访问地址：`http://localhost:3001/pharmacy-management.html`
+医药进销存综合管理系统，采用前后端分离架构，支持药品管理、采购管理、销售管理、供应商管理、分类管理、用户权限管理及数据统计分析等核心业务功能。
 
 ---
 
-## 1. 目录结构
+## 技术栈
 
-- `pharmacy-management.html`：前端页面（Fetch 调用 `/api/v1`）
-- `backend/`：后端服务
-  - `backend/src/server.js`：服务入口
-  - `backend/src/app.js`：Express 应用与中间件
-  - `backend/src/db/pool.js`：MySQL 连接池
-  - `backend/api.md`：API 文档
-- `db/`：MySQL 初始化脚本
-  - `db/init.sql`：建库建表
-  - `db/seed.sql`：种子数据
+| 层级 | 技术 | 版本 |
+|------|------|------|
+| 前端 | 原生 JavaScript（单页应用） | — |
+| 后端 | Node.js + Express | ^4.21 |
+| 数据库 | MySQL | 8.0+ |
+| 认证 | JWT（JSON Web Token） | ^9.0 |
+| 密码加密 | bcryptjs | ^3.0 |
+| 请求校验 | Joi | ^17.13 |
 
 ---
 
-## 2. 环境要求
+## 功能模块
 
-- Node.js 18+（建议 18/20；Node 18+ 内置 `fetch`，便于运行自检脚本）
-- MySQL 8.0+
+- **仪表盘** — 药品总数、月度采购/销售总额、库存预警统计、近 7 天销售趋势图
+- **药品管理** — 药品信息 CRUD、分类及库存状态筛选、库存预警自动计算
+- **采购管理** — 采购单创建、审核与入库，审核时自动更新库存（事务保证）
+- **销售管理** — 销售单创建、确认，确认时自动扣减库存并校验库存不足
+- **供应商管理** — 供应商信息维护、评级管理、合作状态跟踪
+- **分类管理** — 药品分类维护、分类下药品计数
+- **用户管理** — 系统用户 CRUD、角色分配（超级管理员 / 管理员 / 普通用户）
+- **认证授权** — JWT 令牌认证、基于角色的接口权限控制
 
-验证命令：
+---
+
+## 项目结构
+
+```
+医药综合管理平台 v1.0/
+├── pharmacy-management.html     # 前端单页应用
+├── backend/                     # 后端服务
+│   ├── src/
+│   │   ├── server.js            # 服务入口
+│   │   ├── app.js               # Express 应用及中间件配置
+│   │   ├── config.js            # 环境变量配置
+│   │   ├── controllers/         # 控制器层（业务逻辑）
+│   │   │   ├── auth.js          # 登录认证
+│   │   │   ├── users.js         # 用户管理
+│   │   │   ├── medicines.js     # 药品管理
+│   │   │   ├── categories.js    # 分类管理
+│   │   │   ├── suppliers.js     # 供应商管理
+│   │   │   ├── procurement.js   # 采购管理
+│   │   │   ├── sales.js         # 销售管理
+│   │   │   └── stats.js         # 数据统计
+│   │   ├── routes/              # 路由定义
+│   │   ├── schemas/             # Joi 请求验证模式
+│   │   ├── middleware/          # 中间件（认证、验证、错误处理）
+│   │   ├── db/pool.js           # MySQL 连接池
+│   │   └── lib/api-error.js     # 自定义错误类
+│   ├── scripts/
+│   │   ├── seed.js              # 数据库初始化脚本
+│   │   └── smoke-test.js        # 冒烟测试脚本
+│   ├── api.md                   # API 接口文档
+│   └── .env.example             # 环境变量模板
+└── db/
+    ├── init.sql                 # 建库建表 DDL
+    └── seed.sql                 # 演示种子数据
+```
+
+---
+
+## 数据库设计
+
+系统数据库 `pharma_sys`，包含 6 张业务表，均采用 InnoDB 引擎，字符集 `utf8mb4`。
+
+| 表名 | 说明 | 关键字段 |
+|------|------|----------|
+| `users` | 系统用户 | username, password(bcrypt), role, status |
+| `categories` | 药品分类 | name, code, sort, status |
+| `medicines` | 药品信息 | code, name, category_id, spec, price, stock, expire_date, maker, status |
+| `suppliers` | 供应商 | name, contact, phone, address, rating |
+| `procurement_orders` | 采购订单 | code, medicine_id, supplier_id, qty, price, total, status |
+| `sales_orders` | 销售订单 | code, medicine_id, qty, price, total, customer, status |
+
+库存状态自动计算规则：`stock < 20` → 预警，`stock < 50` → 不足，其余 → 充足。
+
+---
+
+## 快速开始
+
+### 环境要求
+
+- **Node.js** 18+
+- **MySQL** 8.0+
+- **npm** 9+
+
+验证环境：
 
 ```bash
 node -v
 npm -v
+mysql --version
 ```
 
----
+### 1. 克隆项目
 
-## 3. 快速开始（Windows / PowerShell）
+```bash
+git clone https://github.com/Tissue-for-charlie/Medication-Management-System.git
+cd Medication-Management-System
+```
 
-### 3.1 安装后端依赖
+### 2. 安装后端依赖
 
-```powershell
-cd "D:\下载\新建文件夹 (2)\backend"
+```bash
+cd backend
 npm install
 ```
 
-### 3.2 配置环境变量
+### 3. 配置环境变量
 
-复制模板为 `.env`：
-
-```powershell
-cd "D:\下载\新建文件夹 (2)\backend"
+```bash
+# Windows
 copy .env.example .env
+
+# macOS / Linux
+cp .env.example .env
 ```
 
-编辑 `backend/.env`，根据本机 MySQL 情况填写：
+编辑 `backend/.env`，根据本机 MySQL 配置修改：
 
 ```env
 PORT=3001
@@ -72,121 +139,99 @@ DB_CONNECTION_LIMIT=10
 CORS_ORIGIN=http://localhost:3001
 ```
 
-说明：
-
-- `DB_PASSWORD` 必须是真实密码；如果无密码，写成 `DB_PASSWORD=`（等号后留空）
-- 如果 `3001` 端口被占用，可以改成 `3002/3101` 等，并同步修改 `CORS_ORIGIN`
-
-### 3.3 初始化数据库（建库/建表/导入演示数据）
-
-```powershell
-cd "D:\下载\新建文件夹 (2)\backend"
-npm run seed
-```
-
-脚本会执行 `db/init.sql` + `db/seed.sql`。
-
-### 3.4 启动后端服务
-
-开发模式（推荐）：
-
-```powershell
-cd "D:\下载\新建文件夹 (2)\backend"
-npm run dev
-```
-
-生产模式：
-
-```powershell
-cd "D:\下载\新建文件夹 (2)\backend"
-npm run start
-```
-
-看到 `API listening on http://localhost:3001` 即启动成功。
-
-### 3.5 打开前端页面
-
-后端启动后，用浏览器访问：
-
-- `http://localhost:3001/pharmacy-management.html`
-
-演示账号（种子数据内置）：
-
-- `admin / 123456`
-- `user1 / 123456`
-
----
-
-## 4. 快速开始（macOS / Linux）
+### 4. 初始化数据库
 
 ```bash
-cd backend
-npm install
-cp .env.example .env
-# 编辑 backend/.env
 npm run seed
-npm run dev
 ```
 
-打开：`http://localhost:3001/pharmacy-management.html`
+该命令将自动执行建库、建表并导入演示数据。
+
+### 5. 启动服务
+
+```bash
+# 开发模式（热重载）
+npm run dev
+
+# 生产模式
+npm start
+```
+
+终端输出 `API listening on http://localhost:3001` 即启动成功。
+
+### 6. 访问系统
+
+浏览器打开：**http://localhost:3001/pharmacy-management.html**
+
+### 演示账号
+
+| 用户名 | 密码 | 角色 |
+|--------|------|------|
+| `admin` | `123456` | 超级管理员 |
+| `user1` | `123456` | 管理员 |
+| `user2` | `123456` | 普通用户 |
 
 ---
 
-## 5. 自检与健康检查
+## API 概览
 
-### 5.1 健康检查接口
+所有 API 基于 `/api/v1` 路径前缀，统一 JSON 响应格式。完整文档见 [backend/api.md](backend/api.md)。
 
-- `GET http://localhost:3001/api/v1/health`
-- `GET http://localhost:3001/api/v1/db/ping`
+### 公开接口
 
-### 5.2 冒烟测试
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| GET | `/api/v1/health` | 服务健康检查 |
+| GET | `/api/v1/db/ping` | 数据库连通性检查 |
+| POST | `/api/v1/auth/login` | 用户登录 |
 
-在后端目录执行：
+### 需认证接口
+
+| 资源 | 端点 | 权限 |
+|------|------|------|
+| 用户管理 | `/api/v1/users` | 超级管理员 |
+| 药品管理 | `/api/v1/medicines` | 所有登录用户 |
+| 分类管理 | `/api/v1/categories` | 超级管理员 |
+| 供应商管理 | `/api/v1/suppliers` | 超级管理员 |
+| 采购管理 | `/api/v1/procurement` | 超级管理员 |
+| 销售管理 | `/api/v1/sales` | 所有登录用户 |
+| 数据统计 | `/api/v1/stats` | 超级管理员 |
+
+### 统一响应格式
+
+```json
+// 成功
+{ "data": { ... }, "pagination": { "page": 1, "pageSize": 8, "total": 50, "totalPages": 7 } }
+
+// 失败
+{ "error": { "message": "错误描述", "details": ["详细原因"] } }
+```
+
+---
+
+## 自检验证
+
+启动服务后，可运行冒烟测试验证核心功能：
 
 ```bash
 cd backend
 npm run smoke
 ```
 
-会校验：
-
-- API 可用
-- 数据库连通
-- 基础列表接口
-- 登录接口
+测试内容：API 可用性、数据库连通性、基础列表接口、登录接口。
 
 ---
 
-## 6. 常见问题排查
+## 安全说明
 
-### 6.1 浏览器报 `ERR_CONNECTION_REFUSED`
-
-- 后端没有启动，或端口不一致
-- 解决：确认 `npm run dev` 正在运行，并访问与 `.env` 的 `PORT` 一致的地址
-
-### 6.2 `Access denied for user ...`
-
-- MySQL 用户名/密码错误
-- 解决：确认 `backend/.env` 的 `DB_USER/DB_PASSWORD` 可用于本机 MySQL 登录
-
-### 6.3 `Unknown database 'pharma_sys'`
-
-- 数据库未初始化
-- 解决：执行 `npm run seed`
-
-### 6.4 `EADDRINUSE: address already in use :::3001`
-
-- 3001 端口被占用
-- 解决：修改 `backend/.env` 的 `PORT`，并重启后端
+- `.env` 文件包含数据库密码等敏感信息，已通过 `.gitignore` 排除，**切勿提交至版本控制**
+- 所有密码使用 bcrypt（10 轮 salt）哈希存储
+- 所有 SQL 操作使用参数化查询，防止 SQL 注入
+- API 通过 JWT 令牌进行身份认证，令牌有效期 2 小时
+- 关键业务操作（采购审核、销售确认）使用数据库事务和行级锁保证数据一致性
 
 ---
 
-## 7. 接口文档
+## License
 
-见 `backend/api.md`。
-
----
-
-## 8. 安全提示
-
-- `backend/.env` 属于本机配置文件，包含数据库密码，请勿提交到公开仓库。
+本项目仅供学习与内部使用。
