@@ -1,12 +1,6 @@
 const { pool } = require('../db/pool');
 const { ApiError } = require('../lib/api-error');
-
-function toPaging(query, total) {
-    const page = query.page;
-    const pageSize = query.pageSize;
-    const totalPages = Math.max(1, Math.ceil(total / pageSize));
-    return { page, pageSize, total, totalPages };
-}
+const { toPaging } = require('../lib/pagination');
 
 async function listSuppliers(req, res) {
     const { page, pageSize, search } = req.query;
@@ -26,8 +20,8 @@ async function listSuppliers(req, res) {
        FROM suppliers
        ${whereSql}
        ORDER BY id ASC
-       LIMIT ${limit} OFFSET ${offset}`,
-        args
+       LIMIT ? OFFSET ?`,
+        [...args, limit, offset]
     );
     res.json({ data: rows, pagination: toPaging(req.query, c.c) });
 }

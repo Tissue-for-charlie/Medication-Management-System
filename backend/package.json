@@ -8,19 +8,30 @@
     "start": "node src/server.js",
     "dev": "cross-env NODE_ENV=development nodemon src/server.js",
     "seed": "node scripts/seed.js",
-    "smoke": "node scripts/smoke-test.js"
+    "smoke": "node scripts/smoke-test.js",
+    "lint": "eslint src/",
+    "format": "prettier --write \"src/**/*.js\"",
+    "test": "jest"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "testPathPattern": "src/__tests__/"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",
     "cors": "^2.8.5",
     "dotenv": "^16.6.1",
     "express": "^4.21.2",
+    "express-rate-limit": "^8.5.2",
     "joi": "^17.13.3",
     "jsonwebtoken": "^9.0.3",
     "mysql2": "^3.14.3"
   },
   "devDependencies": {
     "cross-env": "^7.0.3",
-    "nodemon": "^3.1.10"
+    "eslint": "^10.4.0",
+    "jest": "^30.4.2",
+    "nodemon": "^3.1.10",
+    "prettier": "^3.8.3"
   }
 }

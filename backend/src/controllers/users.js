@@ -1,14 +1,8 @@
 const { pool } = require('../db/pool');
 const { ApiError } = require('../lib/api-error');
+const { toPaging } = require('../lib/pagination');
 const bcrypt = require('bcryptjs');
 const SALT_ROUNDS = 10;
-
-function toPaging(query, total) {
-    const page = query.page;
-    const pageSize = query.pageSize;
-    const totalPages = Math.max(1, Math.ceil(total / pageSize));
-    return { page, pageSize, total, totalPages };
-}
 
 async function listUsers(req, res) {
     const { page, pageSize, search, role, status } = req.query;
@@ -32,8 +26,8 @@ async function listUsers(req, res) {
     const limit = Math.max(1, Math.min(1000, Number(pageSize)));
     const offset = Math.max(0, Number((page - 1) * pageSize));
     const [rows] = await pool.execute(
-        `SELECT id, username, name, phone, role, status, DATE_FORMAT(created_at, "%Y-%m-%d") AS created FROM users ${whereSql} ORDER BY id ASC LIMIT ${limit} OFFSET ${offset}`,
-        args
+        `SELECT id, username, name, phone, role, status, DATE_FORMAT(created_at, "%Y-%m-%d") AS created FROM users ${whereSql} ORDER BY id ASC LIMIT ? OFFSET ?`,
+        [...args, limit, offset]
     );
     res.json({ data: rows, pagination: toPaging(req.query, c.c) });
 }

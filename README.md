@@ -14,6 +14,9 @@
 | 认证 | JWT（JSON Web Token） | ^9.0 |
 | 密码加密 | bcryptjs | ^3.0 |
 | 请求校验 | Joi | ^17.13 |
+| 速率限制 | express-rate-limit | ^8.5 |
+| 代码规范 | ESLint + Prettier | ^10 / ^3 |
+| 测试 | Jest | latest |
 
 ---
 
@@ -27,6 +30,8 @@
 - **分类管理** — 药品分类维护、分类下药品计数
 - **用户管理** — 系统用户 CRUD、角色分配（超级管理员 / 管理员 / 普通用户）
 - **认证授权** — JWT 令牌认证、基于角色的接口权限控制
+- **审计日志** — 关键业务操作（采购审核、销售确认）自动记录审计轨迹
+- **数据缓存** — 统计接口 1 分钟内存缓存，减少数据库压力
 
 ---
 
@@ -48,19 +53,31 @@
 │   │   │   ├── suppliers.js     # 供应商管理
 │   │   │   ├── procurement.js   # 采购管理
 │   │   │   ├── sales.js         # 销售管理
-│   │   │   └── stats.js         # 数据统计
+│   │   │   └── stats.js         # 数据统计（含缓存）
 │   │   ├── routes/              # 路由定义
 │   │   ├── schemas/             # Joi 请求验证模式
 │   │   ├── middleware/          # 中间件（认证、验证、错误处理）
+│   │   ├── services/            # 业务服务层
+│   │   │   ├── lookup.js        # 名称→ID 查找
+│   │   │   └── audit.js         # 审计日志服务
+│   │   ├── lib/                 # 公共工具库
+│   │   │   ├── api-error.js     # 自定义错误类
+│   │   │   ├── pagination.js    # 分页工具
+│   │   │   └── helpers.js       # 通用工具函数
 │   │   ├── db/pool.js           # MySQL 连接池
-│   │   └── lib/api-error.js     # 自定义错误类
+│   │   └── __tests__/           # 单元测试
+│   │       ├── medicines.test.js
+│   │       ├── procurement.test.js
+│   │       └── sales.test.js
 │   ├── scripts/
 │   │   ├── seed.js              # 数据库初始化脚本
 │   │   └── smoke-test.js        # 冒烟测试脚本
 │   ├── api.md                   # API 接口文档
-│   └── .env.example             # 环境变量模板
+│   ├── .env.example             # 环境变量模板
+│   ├── .eslintrc.json           # ESLint 配置
+│   └── .prettierrc              # Prettier 配置
 └── db/
-    ├── init.sql                 # 建库建表 DDL
+    ├── init.sql                 # 建库建表 DDL（含 audit_log 表）
     └── seed.sql                 # 演示种子数据
 ```
 
@@ -68,7 +85,7 @@
 
 ## 数据库设计
 
-系统数据库 `pharma_sys`，包含 6 张业务表，均采用 InnoDB 引擎，字符集 `utf8mb4`。
+系统数据库 `pharma_sys`，包含 7 张业务表 + 1 张审计日志表，均采用 InnoDB 引擎，字符集 `utf8mb4`。
 
 | 表名 | 说明 | 关键字段 |
 |------|------|----------|
@@ -78,6 +95,7 @@
 | `suppliers` | 供应商 | name, contact, phone, address, rating |
 | `procurement_orders` | 采购订单 | code, medicine_id, supplier_id, qty, price, total, status |
 | `sales_orders` | 销售订单 | code, medicine_id, qty, price, total, customer, status |
+| `audit_log` | 审计日志 | user_id, username, action, resource, resource_id, detail, ip |
 
 库存状态自动计算规则：`stock < 20` → 预警，`stock < 50` → 不足，其余 → 充足。
 
@@ -129,6 +147,9 @@ cp .env.example .env
 PORT=3001
 NODE_ENV=development
 
+# JWT 密钥（生产环境必须修改为强随机字符串）
+JWT_SECRET=pharma_jwt_secret_2026
+
 DB_HOST=127.0.0.1
 DB_PORT=3306
 DB_USER=root
@@ -138,6 +159,8 @@ DB_NAME=pharma_sys
 DB_CONNECTION_LIMIT=10
 CORS_ORIGIN=http://localhost:3001
 ```
+
+> **安全提示**：生产环境中 `JWT_SECRET` 必须设置为强随机字符串，否则服务将拒绝启动。
 
 ### 4. 初始化数据库
 
@@ -183,7 +206,7 @@ npm start
 |------|------|------|
 | GET | `/api/v1/health` | 服务健康检查 |
 | GET | `/api/v1/db/ping` | 数据库连通性检查 |
-| POST | `/api/v1/auth/login` | 用户登录 |
+| POST | `/api/v1/auth/login` | 用户登录（频率限制：60秒最多5次） |
 
 ### 需认证接口
 
@@ -218,7 +241,21 @@ cd backend
 npm run smoke
 ```
 
-测试内容：API 可用性、数据库连通性、基础列表接口、登录接口。
+运行单元测试：
+
+```bash
+cd backend
+npm test
+```
+
+代码格式检查：
+
+```bash
+npm run lint
+npm run format
+```
+
+测试内容：API 可用性、数据库连通性、基础列表接口、登录接口、Controller 单元测试。
 
 ---
 
@@ -226,9 +263,13 @@ npm run smoke
 
 - `.env` 文件包含数据库密码等敏感信息，已通过 `.gitignore` 排除，**切勿提交至版本控制**
 - 所有密码使用 bcrypt（10 轮 salt）哈希存储
-- 所有 SQL 操作使用参数化查询，防止 SQL 注入
+- 所有 SQL 操作使用参数化查询（包括 LIMIT/OFFSET），防止 SQL 注入
 - API 通过 JWT 令牌进行身份认证，令牌有效期 2 小时
+- 生产环境 `JWT_SECRET` 强制配置，无默认回退值
+- 登录接口含速率限制（60 秒最多 5 次），防止暴力破解
 - 关键业务操作（采购审核、销售确认）使用数据库事务和行级锁保证数据一致性
+- 前端已添加 XSS 防护（`escapeHtml`），所有用户数据在渲染前进行 HTML 转义
+- 关键业务操作自动写入 `audit_log` 审计日志表
 
 ---
 

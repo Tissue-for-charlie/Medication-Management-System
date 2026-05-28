@@ -1,24 +1,8 @@
 const { pool } = require('../db/pool');
 const { ApiError } = require('../lib/api-error');
-
-function toPaging(query, total) {
-    const page = query.page;
-    const pageSize = query.pageSize;
-    const totalPages = Math.max(1, Math.ceil(total / pageSize));
-    return { page, pageSize, total, totalPages };
-}
-
-function statusFromStock(stock) {
-    if (stock < 20) return '预警';
-    if (stock < 50) return '不足';
-    return '充足';
-}
-
-async function getCategoryIdByName(name) {
-    const [rows] = await pool.execute('SELECT id FROM categories WHERE name = ? LIMIT 1', [name]);
-    if (!rows[0]) throw new ApiError(400, '分类不存在');
-    return rows[0].id;
-}
+const { toPaging } = require('../lib/pagination');
+const { statusFromStock } = require('../lib/helpers');
+const { getCategoryIdByName } = require('../services/lookup');
 
 async function listMedicines(req, res) {
     const { page, pageSize, search, category, status } = req.query;
@@ -57,8 +41,8 @@ async function listMedicines(req, res) {
        JOIN categories c ON c.id = m.category_id
        ${whereSql}
        ORDER BY m.id ASC
-       LIMIT ${limit} OFFSET ${offset}`,
-        args
+       LIMIT ? OFFSET ?`,
+        [...args, limit, offset]
     );
     res.json({ data: rows, pagination: toPaging(req.query, c.c) });
 }

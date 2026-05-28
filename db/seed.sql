@@ -1,5 +1,6 @@
 USE pharma_sys;
 SET FOREIGN_KEY_CHECKS = 0;
+TRUNCATE TABLE audit_log;
 TRUNCATE TABLE sales_orders;
 TRUNCATE TABLE procurement_orders;
 TRUNCATE TABLE medicines;

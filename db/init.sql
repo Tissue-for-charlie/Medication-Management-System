@@ -86,3 +86,18 @@ CREATE TABLE IF NOT EXISTS sales_orders (
     KEY idx_sales_sale_date (sale_date),
     CONSTRAINT fk_sales_medicine FOREIGN KEY (medicine_id) REFERENCES medicines(id) ON UPDATE RESTRICT ON DELETE RESTRICT
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
+CREATE TABLE IF NOT EXISTS audit_log (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    user_id INT,
+    username VARCHAR(64) NOT NULL,
+    action VARCHAR(64) NOT NULL,
+    resource VARCHAR(64) NOT NULL,
+    resource_id INT,
+    detail VARCHAR(500) NOT NULL DEFAULT '',
+    ip VARCHAR(45) NOT NULL DEFAULT '',
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    KEY idx_audit_user (user_id),
+    KEY idx_audit_action (action),
+    KEY idx_audit_resource (resource),
+    KEY idx_audit_created (created_at)
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;

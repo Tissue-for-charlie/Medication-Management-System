@@ -1,22 +1,10 @@
 const { pool } = require('../db/pool');
 const { ApiError } = require('../lib/api-error');
-
-function toPaging(query, total) {
-    const page = query.page;
-    const pageSize = query.pageSize;
-    const totalPages = Math.max(1, Math.ceil(total / pageSize));
-    return { page, pageSize, total, totalPages };
-}
-
-async function getMedicineIdByName(name) {
-    const [rows] = await pool.execute('SELECT id FROM medicines WHERE name = ? LIMIT 1', [name]);
-    if (!rows[0]) throw new ApiError(400, '药品不存在');
-    return rows[0].id;
-}
-
-function makeCode(prefix) {
-    return `${prefix}${Date.now()}`;
-}
+const { toPaging } = require('../lib/pagination');
+const { statusFromStock, makeCode } = require('../lib/helpers');
+const { getMedicineIdByName } = require('../services/lookup');
+const { recordAudit } = require('../services/audit');
+const { clearStatsCache } = require('./stats');
 
 async function listSales(req, res) {
     const { page, pageSize, search, status } = req.query;
@@ -50,8 +38,8 @@ async function listSales(req, res) {
        JOIN medicines m ON m.id = o.medicine_id
        ${whereSql}
        ORDER BY o.id DESC
-       LIMIT ${limit} OFFSET ${offset}`,
-        args
+       LIMIT ? OFFSET ?`,
+        [...args, limit, offset]
     );
     res.json({ data: rows, pagination: toPaging(req.query, c.c) });
 }
@@ -164,12 +152,17 @@ async function approveSale(req, res) {
 
         await conn.execute('UPDATE sales_orders SET status = ? WHERE id = ?', ['已完成', id]);
 
-        let newStatus = '充足';
-        if (newStock < 20) newStatus = '预警';
-        else if (newStock < 50) newStatus = '不足';
+        const newStatus = statusFromStock(newStock);
         await conn.execute('UPDATE medicines SET stock = ?, status = ? WHERE id = ?', [newStock, newStatus, order.medicine_id]);
 
         await conn.commit();
+        recordAudit({
+            userId: req.user?.id, username: req.user?.username,
+            action: '确认', resource: 'sales', resourceId: Number(id),
+            detail: `销售单确认完成，药品ID:${order.medicine_id}，出库数量:${order.qty}`,
+            ip: req.ip
+        });
+        clearStatsCache();
         res.json({ data: true });
     } catch (e) {
         await conn.rollback();

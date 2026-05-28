@@ -1501,6 +1501,14 @@
 
     const API_BASE = '/api/v1';
 
+    // HTML 转义，防止 XSS 攻击
+    function escapeHtml(str) {
+      if (str == null) return '';
+      const div = document.createElement('div');
+      div.textContent = String(str);
+      return div.innerHTML;
+    }
+
     const endpoints = {
       users: '/users',
       categories: '/categories',
@@ -1799,8 +1807,8 @@
     <div class="alert-item">
       <div class="alert-dot red"></div>
       <div>
-        <div style="font-size:14px;font-weight:500;">${m.name}</div>
-        <div style="font-size:12px;color:var(--text-secondary);margin-top:2px;">库存仅剩 <span style="color:var(--accent-danger);font-weight:600;">${m.stock}</span> 件 · 有效期至 ${m.expire}</div>
+        <div style="font-size:14px;font-weight:500;">${escapeHtml(m.name)}</div>
+        <div style="font-size:12px;color:var(--text-secondary);margin-top:2px;">库存仅剩 <span style="color:var(--accent-danger);font-weight:600;">${m.stock}</span> 件 · 有效期至 ${escapeHtml(m.expire)}</div>
       </div>
       <button class="btn btn-warning btn-sm" style="margin-left:auto;white-space:nowrap;" onclick="openModal('procurement')">补货</button>
     </div>`).join('') +
@@ -1808,7 +1816,7 @@
     <div class="alert-item">
       <div class="alert-dot yellow"></div>
       <div>
-        <div style="font-size:14px;font-weight:500;">${m.name}</div>
+        <div style="font-size:14px;font-weight:500;">${escapeHtml(m.name)}</div>
         <div style="font-size:12px;color:var(--text-secondary);margin-top:2px;">库存 <span style="color:var(--accent-warning);font-weight:600;">${m.stock}</span> 件，即将不足</div>
       </div>
     </div>`).join('');
@@ -1818,12 +1826,12 @@
       const rs = stats ? stats.recentSales : DB.sales.slice(0, 5);
       tb.innerHTML = rs.slice(0, 5).map(s => `
     <tr>
-      <td style="font-family:Rajdhani,sans-serif;color:var(--accent-secondary);">${s.code}</td>
-      <td>${s.medicine}</td>
+      <td style="font-family:Rajdhani,sans-serif;color:var(--accent-secondary);">${escapeHtml(s.code)}</td>
+      <td>${escapeHtml(s.medicine)}</td>
       <td>${s.qty}</td>
       <td style="color:var(--accent-primary);">¥${s.total.toLocaleString()}</td>
-      <td>${s.customer}</td>
-      <td style="color:var(--text-secondary);">${s.date}</td>
+      <td>${escapeHtml(s.customer)}</td>
+      <td style="color:var(--text-secondary);">${escapeHtml(s.date)}</td>
       <td>${badgeHtml(s.status)}</td>
     </tr>`).join('');
 
@@ -1859,12 +1867,12 @@
       document.getElementById('users-tbody').innerHTML = slice.map(u => `
     <tr>
       <td style="color:var(--text-muted);">${u.id}</td>
-      <td style="font-family:Rajdhani,sans-serif;font-weight:600;">${u.username}</td>
-      <td>${u.name}</td>
-      <td style="color:var(--text-secondary);">${u.phone}</td>
+      <td style="font-family:Rajdhani,sans-serif;font-weight:600;">${escapeHtml(u.username)}</td>
+      <td>${escapeHtml(u.name)}</td>
+      <td style="color:var(--text-secondary);">${escapeHtml(u.phone)}</td>
       <td>${badgeHtml(u.role)}</td>
       <td>${badgeHtml(u.status)}</td>
-      <td style="color:var(--text-secondary);">${u.created}</td>
+      <td style="color:var(--text-secondary);">${escapeHtml(u.created)}</td>
       <td>
         <div class="table-actions">
           <button class="btn btn-warning btn-sm" onclick="editItem('user',${u.id})">编辑</button>
@@ -1882,9 +1890,9 @@
       document.getElementById('categories-tbody').innerHTML = DB.categories.map(c => `
     <tr>
       <td style="color:var(--text-muted);">${c.id}</td>
-      <td style="font-weight:500;">${c.name}</td>
-      <td style="font-family:Rajdhani,sans-serif;color:var(--accent-secondary);">${c.code}</td>
-      <td style="color:var(--text-secondary);font-size:13px;">${c.desc}</td>
+      <td style="font-weight:500;">${escapeHtml(c.name)}</td>
+      <td style="font-family:Rajdhani,sans-serif;color:var(--accent-secondary);">${escapeHtml(c.code)}</td>
+      <td style="color:var(--text-secondary);font-size:13px;">${escapeHtml(c.desc)}</td>
       <td><span style="color:var(--accent-primary);font-weight:600;">${c.count}</span></td>
       <td>${c.sort}</td>
       <td>${badgeHtml(c.status)}</td>
@@ -1935,10 +1943,10 @@
 
       document.getElementById('medicines-tbody').innerHTML = slice.map(m => `
     <tr>
-      <td style="font-family:Rajdhani,sans-serif;color:var(--accent-secondary);">${m.code}</td>
-      <td style="font-weight:500;">${m.name}</td>
-      <td>${m.category}</td>
-      <td style="font-size:13px;color:var(--text-secondary);">${m.spec}</td>
+      <td style="font-family:Rajdhani,sans-serif;color:var(--accent-secondary);">${escapeHtml(m.code)}</td>
+      <td style="font-weight:500;">${escapeHtml(m.name)}</td>
+      <td>${escapeHtml(m.category)}</td>
+      <td style="font-size:13px;color:var(--text-secondary);">${escapeHtml(m.spec)}</td>
       <td style="color:var(--accent-primary);">¥${m.price}</td>
       <td>
         <div style="display:flex;align-items:center;gap:8px;">
@@ -1948,8 +1956,8 @@
           <span style="${m.stock < 20 ? 'color:var(--accent-danger)' : m.stock < 50 ? 'color:var(--accent-warning)' : ''}">${m.stock}</span>
         </div>
       </td>
-      <td style="font-size:13px;color:var(--text-secondary);">${m.expire}</td>
-      <td style="font-size:13px;color:var(--text-secondary);">${m.maker}</td>
+      <td style="font-size:13px;color:var(--text-secondary);">${escapeHtml(m.expire)}</td>
+      <td style="font-size:13px;color:var(--text-secondary);">${escapeHtml(m.maker)}</td>
       <td>${badgeHtml(m.status)}</td>
       <td>
         <div class="table-actions">
@@ -1973,14 +1981,14 @@
 
       document.getElementById('procurement-tbody').innerHTML = slice.map(p => `
     <tr>
-      <td style="font-family:Rajdhani,sans-serif;color:var(--accent-secondary);">${p.code}</td>
-      <td style="font-weight:500;">${p.medicine}</td>
-      <td>${p.supplier}</td>
+      <td style="font-family:Rajdhani,sans-serif;color:var(--accent-secondary);">${escapeHtml(p.code)}</td>
+      <td style="font-weight:500;">${escapeHtml(p.medicine)}</td>
+      <td>${escapeHtml(p.supplier)}</td>
       <td>${p.qty}</td>
       <td style="color:var(--text-secondary);">¥${p.price}</td>
       <td style="color:var(--accent-primary);font-weight:600;">¥${p.total.toLocaleString()}</td>
-      <td style="color:var(--text-secondary);">${p.date}</td>
-      <td>${p.operator}</td>
+      <td style="color:var(--text-secondary);">${escapeHtml(p.date)}</td>
+      <td>${escapeHtml(p.operator)}</td>
       <td>${badgeHtml(p.status)}</td>
       <td>
         <div class="table-actions">
@@ -2030,10 +2038,10 @@
       document.getElementById('suppliers-tbody').innerHTML = DB.suppliers.map(s => `
     <tr>
       <td style="color:var(--text-muted);">${s.id}</td>
-      <td style="font-weight:500;">${s.name}</td>
-      <td>${s.contact}</td>
-      <td style="color:var(--text-secondary);">${s.phone}</td>
-      <td style="font-size:13px;color:var(--text-secondary);">${s.address}</td>
+      <td style="font-weight:500;">${escapeHtml(s.name)}</td>
+      <td>${escapeHtml(s.contact)}</td>
+      <td style="color:var(--text-secondary);">${escapeHtml(s.phone)}</td>
+      <td style="font-size:13px;color:var(--text-secondary);">${escapeHtml(s.address)}</td>
       <td>${badgeHtml(s.rating)}</td>
       <td>${badgeHtml(s.status)}</td>
       <td>
@@ -2055,14 +2063,14 @@
 
       document.getElementById('sales-tbody').innerHTML = slice.map(s => `
     <tr>
-      <td style="font-family:Rajdhani,sans-serif;color:var(--accent-secondary);">${s.code}</td>
-      <td style="font-weight:500;">${s.medicine}</td>
+      <td style="font-family:Rajdhani,sans-serif;color:var(--accent-secondary);">${escapeHtml(s.code)}</td>
+      <td style="font-weight:500;">${escapeHtml(s.medicine)}</td>
       <td>${s.qty}</td>
       <td style="color:var(--text-secondary);">¥${s.price}</td>
       <td style="color:var(--accent-primary);font-weight:600;">¥${s.total.toLocaleString()}</td>
-      <td>${s.customer}</td>
-      <td style="color:var(--text-secondary);">${s.date}</td>
-      <td>${s.seller}</td>
+      <td>${escapeHtml(s.customer)}</td>
+      <td style="color:var(--text-secondary);">${escapeHtml(s.date)}</td>
+      <td>${escapeHtml(s.seller)}</td>
       <td>${badgeHtml(s.status)}</td>
       <td>
         <div class="table-actions">
@@ -2071,7 +2079,7 @@
           <button class="btn btn-danger btn-sm" onclick="deleteItem('sales',${s.id})">删除</button>
         </div>
       </td>
-    </tr>`).join('');
+    </tr>`).join('') || '<tr><td colspan="10"><div class="empty-state"><div class="icon">💰</div><p>暂无销售数据</p></div></td></tr>';
 
       document.getElementById('sales-info').textContent = `共 ${total} 条记录`;
       renderPager('sales', total, pg, ps);
@@ -2267,20 +2275,20 @@
         if (type === 'medicine') {
           const res = await apiRequest('/categories?page=1&pageSize=100');
           const sel = document.getElementById('f-category');
-          if (sel) sel.innerHTML = res.data.map(c => `<option>${c.name}</option>`).join('');
+          if (sel) sel.innerHTML = res.data.map(c => `<option>${escapeHtml(c.name)}</option>`).join('');
         } else if (type === 'procurement') {
           const [meds, sups] = await Promise.all([
             apiRequest('/medicines?page=1&pageSize=100'),
             apiRequest('/suppliers?page=1&pageSize=100')
           ]);
           const mSel = document.getElementById('f-medicine');
-          if (mSel) mSel.innerHTML = meds.data.map(m => `<option>${m.name}</option>`).join('');
+          if (mSel) mSel.innerHTML = meds.data.map(m => `<option>${escapeHtml(m.name)}</option>`).join('');
           const sSel = document.getElementById('f-supplier');
-          if (sSel) sSel.innerHTML = sups.data.map(s => `<option>${s.name}</option>`).join('');
+          if (sSel) sSel.innerHTML = sups.data.map(s => `<option>${escapeHtml(s.name)}</option>`).join('');
         } else if (type === 'sale') {
           const meds = await apiRequest('/medicines?page=1&pageSize=100');
           const mSel = document.getElementById('f-medicine');
-          if (mSel) mSel.innerHTML = meds.data.map(m => `<option>${m.name}</option>`).join('');
+          if (mSel) mSel.innerHTML = meds.data.map(m => `<option>${escapeHtml(m.name)}</option>`).join('');
         }
       } catch (e) {
         console.error('加载下拉选项失败', e);
@@ -2303,20 +2311,20 @@
         if (type === 'medicine') {
           const res = await apiRequest('/categories?page=1&pageSize=100');
           const sel = document.getElementById('f-category');
-          if (sel) sel.innerHTML = res.data.map(c => `<option>${c.name}</option>`).join('');
+          if (sel) sel.innerHTML = res.data.map(c => `<option>${escapeHtml(c.name)}</option>`).join('');
         } else if (type === 'procurement') {
           const [meds, sups] = await Promise.all([
             apiRequest('/medicines?page=1&pageSize=100'),
             apiRequest('/suppliers?page=1&pageSize=100')
           ]);
           const mSel = document.getElementById('f-medicine');
-          if (mSel) mSel.innerHTML = meds.data.map(m => `<option>${m.name}</option>`).join('');
+          if (mSel) mSel.innerHTML = meds.data.map(m => `<option>${escapeHtml(m.name)}</option>`).join('');
           const sSel = document.getElementById('f-supplier');
-          if (sSel) sSel.innerHTML = sups.data.map(s => `<option>${s.name}</option>`).join('');
+          if (sSel) sSel.innerHTML = sups.data.map(s => `<option>${escapeHtml(s.name)}</option>`).join('');
         } else if (type === 'sale') {
           const meds = await apiRequest('/medicines?page=1&pageSize=100');
           const mSel = document.getElementById('f-medicine');
-          if (mSel) mSel.innerHTML = meds.data.map(m => `<option>${m.name}</option>`).join('');
+          if (mSel) mSel.innerHTML = meds.data.map(m => `<option>${escapeHtml(m.name)}</option>`).join('');
         }
       } catch (e) {
         console.error('加载下拉选项失败', e);

@@ -1,6 +1,15 @@
 const { pool } = require('../db/pool');
 
+let cached = null;
+let cachedAt = 0;
+const CACHE_TTL = 60 * 1000; // 1分钟
+
 async function getStats(req, res) {
+    const now = Date.now();
+    if (cached && (now - cachedAt) < CACHE_TTL) {
+        return res.json({ data: cached });
+    }
+
     const [[medCount]] = await pool.execute('SELECT COUNT(*) AS c FROM medicines');
     const [[procSum]] = await pool.execute('SELECT COALESCE(SUM(total),0) AS s FROM procurement_orders WHERE DATE_FORMAT(order_date,"%Y-%m") = DATE_FORMAT(CURDATE(),"%Y-%m")');
     const [[procSumLastMonth]] = await pool.execute('SELECT COALESCE(SUM(total),0) AS s FROM procurement_orders WHERE DATE_FORMAT(order_date,"%Y-%m") = DATE_FORMAT(DATE_SUB(CURDATE(), INTERVAL 1 MONTH),"%Y-%m")');
@@ -28,19 +37,27 @@ async function getStats(req, res) {
          ORDER BY date ASC`
     );
 
-    res.json({
-        data: {
-            medicinesTotal: medCount.c,
-            procurementMonthTotal: Number(procSum.s),
-            procurementLastMonth: Number(procSumLastMonth.s),
-            salesMonthTotal: Number(salesSum.s),
-            salesLastMonth: Number(salesSumLastMonth.s),
-            stockWarningTotal: warnCount.c,
-            alerts,
-            recentSales,
-            dailySales
-        }
-    });
+    const data = {
+        medicinesTotal: medCount.c,
+        procurementMonthTotal: Number(procSum.s),
+        procurementLastMonth: Number(procSumLastMonth.s),
+        salesMonthTotal: Number(salesSum.s),
+        salesLastMonth: Number(salesSumLastMonth.s),
+        stockWarningTotal: warnCount.c,
+        alerts,
+        recentSales,
+        dailySales
+    };
+
+    cached = data;
+    cachedAt = now;
+
+    res.json({ data });
 }
 
-module.exports = { getStats };
+function clearStatsCache() {
+    cached = null;
+    cachedAt = 0;
+}
+
+module.exports = { getStats, clearStatsCache };
